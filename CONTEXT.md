@@ -46,7 +46,7 @@ Mỗi GĐ: Lý thuyết & kiến trúc → Code (học viên tự làm) → Chec
 | GĐ | Tên | Kết quả | Trạng thái |
 |---|---|---|---|
 | 0 | Foundation & Monorepo | Repo + tooling + shared package | ✅ DONE |
-| 1 | BE Core + Data Modeling | Data model + Prisma + Postgres + CRUD API | ← TIẾP THEO |
+| 1 | BE Core + Data Modeling | Data model + Prisma + Postgres + CRUD API | 🔄 ĐANG LÀM (✅ phần DATA xong → 🔄 phần CRUD API CHƯA giảng, sẽ bắt đầu bằng lý thuyết REST. Chi tiết mục 7) |
 | 2 | Auth & Security | Register/login, JWT+refresh, RBAC, rate-limit | chưa |
 | 3 | FE Core | Next.js UI, React Query, RHF+Zod, Tailwind | chưa |
 | 4 | FE State & Offline | Zustand, IndexedDB, optimistic update | chưa |
@@ -85,13 +85,36 @@ Lệnh hay dùng:
 
 ---
 
-## 7. GIAI ĐOẠN 1 — VIỆC TIẾP THEO (chưa bắt đầu)
-- Thiết kế data model TaskFlow: User, Workspace, Membership(role), Project, Board, Task
-  (quan hệ nhiều tầng) → HỌC VIÊN tự thiết kế trước, mentor review.
-- Cài Prisma + PostgreSQL (chạy Postgres bằng Docker để khỏi cài local).
-- Viết schema.prisma + migration đầu tiên.
-- Xây kiến trúc layered cho Fastify: routes → services → repositories. Giải thích vì sao tách lớp.
-- CRUD API cho Task, dùng Zod từ @taskflow/shared để validate input.
+## 7. GIAI ĐOẠN 1 — TIẾN ĐỘ
+
+### 7a. Phần DATA — ✅ ĐÃ XONG
+- Data model: User, Workspace, Membership(role), Project, Board, Task, TaskAssignee → học viên tự thiết kế, mentor review.
+- schema.prisma (6 model + 3 enum) valid; 2 migrations (init + make_author_required).
+- PostgreSQL chạy bằng Docker (docker-compose.yml ở root; container taskflow-postgres; volume taskflow_pgdata; port 5432).
+  DATABASE_URL trong apps/api/.env = postgresql://taskflow:taskflow@localhost:5432/taskflow?schema=public
+- Thực hành Prisma Studio: tạo data 6 bảng; verify JOIN/FK/cascade/referential-integrity bằng SQL. Ôn tập 3/3 đúng.
+
+### 7b. Phần CRUD API — 🔄 CHƯA GIẢNG (mới giới thiệu sơ)
+- CHƯA giảng chính thức. Mentor mới đưa bản nháp lý thuyết REST, học viên MỚI ĐỌC SƠ QUA → cần giảng lại
+  bài bản + checkpoint khi quay lại.
+- Nội dung REST sẽ giảng: resource + URL(endpoint danh từ số nhiều) + HTTP method (GET/POST/PATCH/DELETE=CRUD),
+  request(method/url/headers/body) & response(status code + body), status code (2xx OK / 4xx lỗi client / 5xx lỗi server).
+  Ẩn dụ nhà hàng: DB=bếp, API=phục vụ, frontend=khách, REST=quy tắc gọi món.
+- TODO tiếp: (1) giảng REST + checkpoint; (2) chọn web framework (Express/Fastify/Hono — phân tích cho học viên chọn);
+  (3) layered architecture (routes → services → repositories, giải thích vì sao tách lớp);
+  (4) CRUD Task dùng Zod từ @taskflow/shared validate input.
+- LƯU Ý: Prisma Client hiện CHƯA sinh (thiếu apps/api/src/generated/prisma) → học viên chạy `pnpm exec prisma generate` trước khi code.
+
+GHI CHÚ PRISMA 7 (đã vấp — nhớ để khỏi vấp lại):
+- Prisma 7 BỎ `url = env(...)` trong schema.prisma. Connection URL đặt ở prisma.config.ts
+  (datasource.url = process.env["DATABASE_URL"]). Nếu để url trong schema → lỗi P1012.
+- generator provider = "prisma-client" (mới), output tự sinh vào src/generated/prisma.
+- @relation("tên") CHỈ cần khi có >=2 quan hệ giữa CÙNG 2 model. 1 quan hệ đơn → KHÔNG cần
+  (đã kiểm chứng: xóa nhãn "TaskAuthor" vẫn valid). User↔Task chỉ 1 quan hệ (author) nên bỏ nhãn.
+- KHÔNG dùng PowerShell Set-Content cho file .prisma (thêm BOM làm hỏng dòng 1). Dùng editor.
+- QUYẾT ĐỊNH: Task.authorId = NOT NULL (task luôn do user đăng nhập tạo, server tự điền từ token;
+  nguyên tắc "chặt trước, nới lỏng sau"). Assignee là n-n qua TaskAssignee → "chưa gán" = chưa có
+  dòng liên kết, không cần nullable. dueDate & description = nullable (user được bỏ trống).
 
 Bài tập thiết kế (làm trước khi vào GĐ1):
 1. Các bảng có field gì?
