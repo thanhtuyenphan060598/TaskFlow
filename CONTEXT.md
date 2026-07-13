@@ -7,6 +7,29 @@
 > TÔI là người gõ lệnh/viết file. Code viết TIẾNG ANH. Đi từng bước nhỏ, giải thích
 > trước khi làm."
 
+
+## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi)
+
+**Vừa xong:** GĐ1 hoàn tất — CRUD API cho resource Task, kiến trúc 3 lớp (route→service→repository),
+Zod validate, error handler tập trung, seed data. Đã test curl đầu-cuối, tất cả PASS. (Chi tiết mục 7b.)
+
+**BÀI TIẾP THEO (buổi sau bắt đầu từ đây): GĐ2 — Auth & Security.**
+Thứ tự dự kiến giảng (đi từng bước nhỏ, giải thích trước khi code, học viên tự gõ):
+1. Lý thuyết Authentication vs Authorization (nối lại 401 vs 403 đã học ở GĐ1) + checkpoint.
+2. Hash password bằng bcrypt (thay `password: "placeholder"` trong seed) — vì sao không lưu plaintext.
+3. Endpoint POST /auth/register + POST /auth/login (Zod schema mới trong @taskflow/shared).
+4. JWT + refresh token: access token ngắn hạn + refresh dài hạn; giải thích vì sao 2 token.
+5. Middleware/hook xác thực (Fastify preHandler) → gắn user vào request; route cần auth.
+6. Áp dụng ngay vào Task: thay SEED_USER_ID bằng user id lấy từ token (chỉ sửa 1 dòng trong task.service — nợ kỹ thuật đã ghi ở 7b).
+7. RBAC dùng enum Role (OWNER/ADMIN/MEMBER) — vd: chỉ author/OWNER được xóa task → đây là lúc trả 403 thật.
+8. (Cuối) rate-limit bằng plugin Fastify.
+
+**Trước khi code GĐ2, chạy lại môi trường:** `docker compose up -d` (Postgres). Prisma Client đã generate sẵn.
+
+**Cách mentor (BẮT BUỘC giữ):** mentor CHỈ hướng dẫn + giải thích + review; HỌC VIÊN tự gõ mọi code/lệnh.
+Tài liệu (file này) mentor viết hộ. Code tiếng Anh. Đi từng bước nhỏ. Checkpoint câu hỏi mỗi bài.
+KHÔNG tự ý sửa file của học viên khi chưa giải thích & học viên chưa đồng ý.
+
 ---
 
 ## 0. Mục Tiêu
@@ -46,8 +69,8 @@ Mỗi GĐ: Lý thuyết & kiến trúc → Code (học viên tự làm) → Chec
 | GĐ | Tên | Kết quả | Trạng thái |
 |---|---|---|---|
 | 0 | Foundation & Monorepo | Repo + tooling + shared package | ✅ DONE |
-| 1 | BE Core + Data Modeling | Data model + Prisma + Postgres + CRUD API | 🔄 ĐANG LÀM (✅ phần DATA xong → 🔄 phần CRUD API CHƯA giảng, sẽ bắt đầu bằng lý thuyết REST. Chi tiết mục 7) |
-| 2 | Auth & Security | Register/login, JWT+refresh, RBAC, rate-limit | chưa |
+| 1 | BE Core + Data Modeling | Data model + Prisma + Postgres + CRUD API | ✅ DONE (DATA + CRUD API Task 3 lớp chạy & test OK. Chi tiết mục 7) |
+| 2 | Auth & Security | Register/login, JWT+refresh, RBAC, rate-limit | 👉 TIẾP THEO (bắt đầu buổi sau — xem mục ⏸️ ĐIỂM DỪNG HIỆN TẠI đầu file) |
 | 3 | FE Core | Next.js UI, React Query, RHF+Zod, Tailwind | chưa |
 | 4 | FE State & Offline | Zustand, IndexedDB, optimistic update | chưa |
 | 5 | Realtime | WebSocket, presence, live board | chưa |
@@ -94,16 +117,40 @@ Lệnh hay dùng:
   DATABASE_URL trong apps/api/.env = postgresql://taskflow:taskflow@localhost:5432/taskflow?schema=public
 - Thực hành Prisma Studio: tạo data 6 bảng; verify JOIN/FK/cascade/referential-integrity bằng SQL. Ôn tập 3/3 đúng.
 
-### 7b. Phần CRUD API — 🔄 CHƯA GIẢNG (mới giới thiệu sơ)
-- CHƯA giảng chính thức. Mentor mới đưa bản nháp lý thuyết REST, học viên MỚI ĐỌC SƠ QUA → cần giảng lại
-  bài bản + checkpoint khi quay lại.
-- Nội dung REST sẽ giảng: resource + URL(endpoint danh từ số nhiều) + HTTP method (GET/POST/PATCH/DELETE=CRUD),
-  request(method/url/headers/body) & response(status code + body), status code (2xx OK / 4xx lỗi client / 5xx lỗi server).
-  Ẩn dụ nhà hàng: DB=bếp, API=phục vụ, frontend=khách, REST=quy tắc gọi món.
-- TODO tiếp: (1) giảng REST + checkpoint; (2) chọn web framework (Express/Fastify/Hono — phân tích cho học viên chọn);
-  (3) layered architecture (routes → services → repositories, giải thích vì sao tách lớp);
-  (4) CRUD Task dùng Zod từ @taskflow/shared validate input.
-- LƯU Ý: Prisma Client hiện CHƯA sinh (thiếu apps/api/src/generated/prisma) → học viên chạy `pnpm exec prisma generate` trước khi code.
+### 7b. Phần CRUD API — ✅ ĐÃ XONG (giảng + code + test đầu-cuối OK)
+Đã giảng đủ 4 bài: (1) REST + checkpoint; (2) so sánh Express/Fastify/Hono → CHỐT Fastify (giải thích edge là gì,
+vì sao Hono không hợp: ta deploy VPS truyền thống, không edge); (3) layered architecture route→service→repository;
+(4) CRUD Task với Zod validate. Ẩn dụ nhà hàng: DB=bếp, API=phục vụ, FE=khách, REST=quy tắc gọi món.
+
+Cấu trúc apps/api/src đã dựng:
+- lib/prisma.ts       → PrismaClient dùng chung, KẾT NỐI QUA DRIVER ADAPTER @prisma/adapter-pg (Prisma 7 khuyến nghị),
+                        import "dotenv/config" để nạp DATABASE_URL. (KHÔNG dùng engine binary cũ.)
+- lib/errors.ts       → class AppError(statusCode, message) + helper notFound() = AppError(404).
+- repositories/task.repository.ts → CHỈ chạm Prisma (create/findAll/findById/update/delete), dùng type Prisma.TaskCreateInput/UpdateInput.
+- services/task.service.ts → business logic, KHÔNG chạm HTTP. authorId server tự gắn từ process.env.SEED_USER_ID
+                        (author: { connect: { id } }); getById throw notFound; update/delete gọi getById trước để check tồn tại.
+- routes/task.routes.ts → Zod .parse(body); trả 201 (POST) / 200 (GET/PATCH) / 204 (DELETE); ép request.params as {id}.
+- server.ts           → app.setErrorHandler tập trung: ZodError→400, AppError→statusCode, khác→500.
+                        app.register(taskRoutes, { prefix: "/api/v1" })  → endpoint là /api/v1/tasks (học viên tự thêm versioning).
+                        PORT = 3001 (tránh đụng Next.js 3000). Script dev = "tsx watch src/server.ts".
+
+Shared schema (packages/shared/src/schemas/task.ts): createTaskSchema { title, boardId(z.uuid — Zod v4 cú pháp mới),
+description?, dueDate?(z.coerce.date) }; updateTaskSchema = createTaskSchema.partial(). authorId CỐ TÌNH VẮNG (client không gửi).
+
+Seed data (apps/api/prisma/seed.ts): tạo User + Workspace→Project→Board. In ra SEED_USER_ID & SEED_BOARD_ID.
+- SEED_USER_ID đã lưu vào apps/api/.env. Board id test hiện có: b44cfb35-907d-4fd4-8ed0-875bebe2a839.
+- Chạy lại seed: pnpm --filter @taskflow/api exec tsx prisma/seed.ts
+
+ĐÃ TEST (curl, mentor chạy): POST→201 (author tự gắn đúng), GET list→200, GET missing→404, thiếu title→400,
+boardId sai uuid→400. Tất cả PASS. (Lưu ý: `tsx watch` restart giữa chừng có thể gây GET trả [] chập chờn khi test tự động —
+không phải lỗi; khi test integration ở GĐ7 chạy server KHÔNG watch.)
+
+Prisma Client: ĐÃ generate (apps/api/src/generated/prisma tồn tại). Postgres chạy Docker OK.
+
+TODO GĐ tiếp / nợ kỹ thuật:
+- Validate luôn request.params (:id) bằng Zod (hiện mới ép kiểu `as {id}`, chưa validate uuid ở params).
+- GĐ2 Auth: thay SEED_USER_ID bằng user id lấy từ token → chỉ sửa 1 dòng trong task.service (route/schema không đụng).
+- Cân nhắc lại TaskAssignee.userId đang String? (nullable) — lệch nhẹ ghi chú GĐ1 "assignee không cần nullable"; review khi làm assignee.
 
 GHI CHÚ PRISMA 7 (đã vấp — nhớ để khỏi vấp lại):
 - Prisma 7 BỎ `url = env(...)` trong schema.prisma. Connection URL đặt ở prisma.config.ts
