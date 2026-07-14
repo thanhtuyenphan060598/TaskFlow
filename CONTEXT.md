@@ -10,8 +10,17 @@
 
 ## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi)
 
-**Vừa xong:** GĐ1 hoàn tất — CRUD API cho resource Task, kiến trúc 3 lớp (route→service→repository),
-Zod validate, error handler tập trung, seed data. Đã test curl đầu-cuối, tất cả PASS. (Chi tiết mục 7b.)
+**Vừa xong:** GĐ1 hoàn tất + ĐÃ ĐÁNH BÓNG "sạch" — CRUD API resource Task, kiến trúc 3 lớp
+(route→service→repository), Zod validate, error handler tập trung, seed data. Test curl đầu-cuối PASS. (Chi tiết mục 7b.)
+
+**Đánh bóng schema (mới làm — bài học Zod strip/strict):**
+- `createTaskSchema` giờ dùng `.strict()` → field lạ (vd authorId) bị TỪ CHỐI 400 "Unrecognized key"
+  thay vì âm thầm strip (mặc định .strip() = VỨT BỎ im lặng, KHÔNG lưu — đây là thứ gây bối rối trước đó).
+- Thêm `status`/`priority` optional (z.enum, khai báo TRONG shared, KHÔNG import Prisma — giữ đồng bộ tay với schema.prisma).
+  → client giờ set được status/priority khi tạo; không gửi thì DB dùng default TODO/LOW.
+- `dueDate: z.coerce.date().nullable().optional()` → null/absent = "no due date" (lưu null, hết bug 1970-01-01).
+- Service (task.service.ts) đồng bộ: CreateTaskData thêm status/priority + dueDate:Date|null; hàm create truyền 2 field đó vào Prisma.
+- ĐÃ TEST 4 case PASS: status/priority ăn thật(201); authorId→400; dueDate null→lưu null; status sai enum→400.
 
 **BÀI TIẾP THEO (buổi sau bắt đầu từ đây): GĐ2 — Auth & Security.**
 Thứ tự dự kiến giảng (đi từng bước nhỏ, giải thích trước khi code, học viên tự gõ):

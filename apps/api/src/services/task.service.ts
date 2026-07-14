@@ -9,7 +9,9 @@ type CreateTaskData = {
     title: string;
     boardId: string;
     description?: string;
-    dueDate?: Date;
+    dueDate?: Date | null;
+    status?: 'TODO' | 'IN_PROGRESS' | 'DONE';
+    priority?: 'LOW' | 'MEDIUM' | 'HIGH';
 };
 
 type UpdateTaskData = Partial<CreateTaskData>;
@@ -26,6 +28,8 @@ export const taskService = {
             dueDate: data.dueDate,
             board: { connect: { id: data.boardId } },
             author: { connect: { id: SEED_USER_ID } },
+            status: data.status,
+            priority: data.priority,
         }
         return taskRepository.create(input);
     },
