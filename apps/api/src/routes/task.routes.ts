@@ -3,30 +3,30 @@ import { createTaskSchema, updateTaskSchema } from "@taskflow/shared";
 import { taskService } from "../services/task.service.js";
 
 export async function taskRoutes(app: FastifyInstance) {
-    app.post("/tasks", async (request, reply) => {
+    app.post("/", async (request, reply) => {
         const data = createTaskSchema.parse(request.body);
         const task = await taskService.create(data);
         return reply.status(201).send(task);
     })
 
-    app.get("/tasks", async () => {
+    app.get("/", async () => {
         return taskService.getAll();
     })
 
-    app.get("/tasks/:id", async (request) => {
+    app.get("/:id", async (request) => {
         const { id } = request.params as { id: string };
         const task = await taskService.getById(id);
         return task;
     })
 
-    app.patch("/tasks/:id", async (request) => {
+    app.patch("/:id", async (request) => {
         const { id } = request.params as { id: string };
         const data = updateTaskSchema.parse(request.body);
         const task = await taskService.update(id, data);
         return task;
     });
 
-    app.delete("/tasks/:id", async (request, reply) => {
+    app.delete("/:id", async (request, reply) => {
         const { id } = request.params as { id: string };
         await taskService.delete(id);
         return reply.code(204).send();

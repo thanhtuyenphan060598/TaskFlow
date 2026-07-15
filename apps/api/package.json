@@ -7,6 +7,7 @@
         "dev": "tsx watch src/server.ts"
     },
     "devDependencies": {
+        "@types/bcryptjs": "^3.0.0",
         "@types/node": "^26.1.1",
         "@types/pg": "^8.20.0",
         "dotenv": "^17.4.2",
@@ -14,9 +15,11 @@
         "typescript": "^7.0.2"
     },
     "dependencies": {
+        "@fastify/jwt": "^10.2.0",
         "@prisma/adapter-pg": "^7.8.0",
         "@prisma/client": "^7.8.0",
         "@taskflow/shared": "workspace:^",
+        "bcryptjs": "^3.0.3",
         "fastify": "^5.10.0",
         "pg": "^8.22.0",
         "zod": "^4.4.3"

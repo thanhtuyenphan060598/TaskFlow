@@ -8,6 +8,14 @@
 > trước khi làm."
 
 
+## 🗣️ XƯNG HÔ (QUAN TRỌNG — mentor sau ĐỌC & TUÂN THỦ)
+Học viên yêu cầu mentor xưng **"tao"**, gọi học viên là **"mày"**. KHÔNG dùng bạn/tôi/ta/tớ/mình.
+Giọng thẳng thắn, đời thường, vẫn nghiêm túc về kiến thức. Code + comment vẫn TIẾNG ANH.
+
+## ⚠️ LỖI TOOL: KHÔNG dùng ask_question (nút bấm tương tác)
+Trong môi trường terminal này, tool hỏi tương tác (multiple-choice) LUÔN lỗi "Interactive runtime abort requested".
+→ Mentor sau: hỏi lựa chọn bằng CHỮ trong câu trả lời, để học viên gõ text trả lời. TUYỆT ĐỐI không gọi tool ask_question.
+
 ## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi)
 
 **Vừa xong:** GĐ1 hoàn tất + ĐÃ ĐÁNH BÓNG "sạch" — CRUD API resource Task, kiến trúc 3 lớp
@@ -22,16 +30,43 @@
 - Service (task.service.ts) đồng bộ: CreateTaskData thêm status/priority + dueDate:Date|null; hàm create truyền 2 field đó vào Prisma.
 - ĐÃ TEST 4 case PASS: status/priority ăn thật(201); authorId→400; dueDate null→lưu null; status sai enum→400.
 
-**BÀI TIẾP THEO (buổi sau bắt đầu từ đây): GĐ2 — Auth & Security.**
-Thứ tự dự kiến giảng (đi từng bước nhỏ, giải thích trước khi code, học viên tự gõ):
-1. Lý thuyết Authentication vs Authorization (nối lại 401 vs 403 đã học ở GĐ1) + checkpoint.
-2. Hash password bằng bcrypt (thay `password: "placeholder"` trong seed) — vì sao không lưu plaintext.
-3. Endpoint POST /auth/register + POST /auth/login (Zod schema mới trong @taskflow/shared).
-4. JWT + refresh token: access token ngắn hạn + refresh dài hạn; giải thích vì sao 2 token.
-5. Middleware/hook xác thực (Fastify preHandler) → gắn user vào request; route cần auth.
-6. Áp dụng ngay vào Task: thay SEED_USER_ID bằng user id lấy từ token (chỉ sửa 1 dòng trong task.service — nợ kỹ thuật đã ghi ở 7b).
-7. RBAC dùng enum Role (OWNER/ADMIN/MEMBER) — vd: chỉ author/OWNER được xóa task → đây là lúc trả 403 thật.
-8. (Cuối) rate-limit bằng plugin Fastify.
+**ĐANG LÀM: GĐ2 — Auth & Security. Tiến độ:**
+- ✅ Bài 1: Lý thuyết AuthN vs AuthZ (401 vs 403) — checkpoint 4/4 PASS.
+- ✅ Bài 2: bcrypt. Đã cài `bcryptjs` + `@types/bcryptjs` (api). Tạo `lib/password.ts` (hashPassword/verifyPassword, SALT_ROUNDS=10).
+  Đã verify hash/compare chạy đúng, salt ngẫu nhiên OK.
+- ✅ Bài 3: REGISTER xong. Files: shared `schemas/auth.ts` (registerSchema min8+strict, loginSchema min1+strict) + export ở index.
+  `repositories/user.repository.ts` (create/findByEmail/findById). `lib/errors.ts` thêm conflict()=409.
+  `services/auth.service.ts` register: check trùng email→409, hash, create, trả SafeUser (KHÔNG lộ password).
+  `routes/auth.routes.ts` POST /register. ĐÃ TEST: register→201 (response ko có password), trùng→409, DB lưu $2b$ hash. PASS.
+- ✅ REFACTOR (giữa chừng, học viên tự yêu cầu): tách `config/env.ts` (Zod validate env: DATABASE_URL/SEED_USER_ID/PORT,
+  safeParse+process.exit(1) fail-fast), `lib/error-handler.ts` (tách setErrorHandler ra hàm), `app.ts` (buildApp: setErrorHandler
+  + register routes, KHÔNG listen — để test integration GĐ7 import được), `server.ts` rút gọn (buildApp + listen env.PORT).
+  Routes dùng prefix theo CÁCH B: prefix=`/api/v1/tasks|/auth|/health`, path trong file rút gọn (task POST/GET path=""; :id; auth /register; health /).
+  Đã đổi hết `req,res`→`request,reply` chuẩn Fastify. ĐÃ TEST lại tất cả endpoint PASS (path "" chạy tốt).
+
+- ✅ Bài 3b: LOGIN xong. `errors.ts` thêm unauthorized()=401. auth.service.login: findByEmail→verifyPassword,
+  cả 2 nhánh (ko có user / sai pass) trả CÙNG "Invalid email or password" (chống user enumeration). route POST /login trả 200.
+  Tạm trả SafeUser (Bài 4 đổi thành JWT). ĐÃ TEST 4 case PASS: đúng→200; sai pass→401; email ko tồn tại→401 (message giống hệt); thiếu pass→400 Zod.
+
+- 🚧 Bài 4: JWT — ĐANG LÀM DỞ, DỪNG GIỮA CHỪNG. Trạng thái chính xác:
+  • ✅ Bước 1 XONG: đã cài `@fastify/jwt ^10.2.0` (dependencies). Đã thêm `JWT_SECRET="dev-super-secret-change-me-in-production-a1b2c3d4e5f6"`
+    vào apps/api/.env. Đã thêm `JWT_SECRET: z.string().min(16,...)` vào envSchema trong config/env.ts. ĐÃ VERIFY: env hợp lệ load OK; secret <16 ký tự → fail fast. PASS.
+  • 🔴 Bước 2 CHƯA LÀM (học viên chưa gõ, dừng ngay trước bước này): sửa `app.ts` — thêm
+      `import fastifyJwt from "@fastify/jwt";` + `import { env } from "./config/env.js";`
+    và đăng ký plugin TRƯỚC phần register routes: `app.register(fastifyJwt, { secret: env.JWT_SECRET });`
+    → mentor sau: BẮT ĐẦU LẠI TỪ ĐÂY. Hướng dẫn học viên gõ Bước 2, verify server boot OK với plugin, rồi qua Bước 3.
+  • ⏭️ Bước 3 (sau Bước 2): sửa LOGIN trả token. QUYẾT ĐỊNH KIẾN TRÚC ĐÃ CHỐT = CÁCH A:
+      chỉ dùng @fastify/jwt cho CẢ ký + verify (KHÔNG cài jsonwebtoken — đã loại vì thừa).
+      Ký token TẠI ROUTE (route có sẵn `app` → dùng `app.jwt.sign(payload, { expiresIn })`), SERVICE chỉ xác thực user rồi trả user về route.
+      login trả { accessToken (~15m), refreshToken (~7d) }. Payload token chỉ chứa { userId } (KHÔNG để đồ nhạy cảm — payload chỉ base64, ai cũng đọc).
+  • Lý thuyết JWT đã giảng kỹ & học viên ĐÃ NGẤM: JWT = encode(base64, ai đọc cũng được) + sign(chữ ký chống sửa), KHÔNG encrypt.
+    encode≠encrypt≠hash. Phải gửi CẢ 3 phần header.payload.signature. Ví dụ "tấm vé xem phim có dấu mộc".
+
+**BÀI TIẾP THEO (GĐ2 còn lại — sau khi xong Bài 4):**
+- Bài 5: auth hook (Fastify preHandler/decorate) verify token bằng `request.jwtVerify()` → gắn request.user={userId}. Route cần auth dùng hook này.
+- Bài 6: Áp vào Task — thay SEED_USER_ID bằng request.user.userId (sửa ~1 dòng task.service). Fix seed password "placeholder"→hash.
+- Bài 7: RBAC (enum Role OWNER/ADMIN/MEMBER) → vd chỉ author/OWNER xóa task = 403 thật. (+ nợ: validate :id bằng Zod ở params.)
+- Bài 8 (cuối GĐ2): rate-limit `@fastify/rate-limit`.
 
 **Trước khi code GĐ2, chạy lại môi trường:** `docker compose up -d` (Postgres). Prisma Client đã generate sẵn.
 
