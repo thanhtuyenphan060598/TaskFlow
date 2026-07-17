@@ -1,9 +1,8 @@
-import "dotenv/config";
 import { taskRepository } from "../repositories/task.repository.js";
 import { notFound } from "../lib/errors.js";
 import type { Prisma } from "../generated/prisma/client.js"
+import { permissionService } from "./permission.service.js";
 
-const SEED_USER_ID = process.env.SEED_USER_ID;
 
 type CreateTaskData = {
     title: string;
@@ -17,17 +16,14 @@ type CreateTaskData = {
 type UpdateTaskData = Partial<CreateTaskData>;
 
 export const taskService = {
-    create(data: CreateTaskData) {
-        if (!SEED_USER_ID) {
-            throw new Error("SEED_USER_ID is not set in environment");
-        }
+    create(data: CreateTaskData, authorId: string) {
 
         const input: Prisma.TaskCreateInput = {
             title: data.title,
             description: data.description,
             dueDate: data.dueDate,
             board: { connect: { id: data.boardId } },
-            author: { connect: { id: SEED_USER_ID } },
+            author: { connect: { id: authorId } },
             status: data.status,
             priority: data.priority,
         }
@@ -46,13 +42,13 @@ export const taskService = {
         return task;
     },
 
-    async update(id: string, data: UpdateTaskData) {
-        await this.getById(id);
+    async update(id: string, data: UpdateTaskData, userId: string) {
+        await permissionService.assertCanModifyTask(id, userId);
         return taskRepository.update(id, data);
     },
 
-    async delete(id: string) {
-        await this.getById(id);
+    async delete(id: string, userId: string) {
+        await permissionService.assertCanModifyTask(id, userId);
         return taskRepository.delete(id);
     }
 }

@@ -12,6 +12,20 @@ export async function authRoutes(app: FastifyInstance) {
     app.post('/login', async (request, reply) => {
         const data = loginSchema.parse(request.body);
         const user = await authService.login(data);
-        return reply.code(200).send(user);
+
+        const accessToken = app.jwt.sign(
+            { userId: user.id },
+            { expiresIn: '15m' }
+        );
+
+        const refreshToken = app.jwt.sign(
+            { userId: user.id },
+            { expiresIn: '7d' }
+        );
+
+        return reply.code(200).send({
+            accessToken,
+            refreshToken,
+        });
     })
 }

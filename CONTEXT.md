@@ -12,9 +12,14 @@
 Học viên yêu cầu mentor xưng **"tao"**, gọi học viên là **"mày"**. KHÔNG dùng bạn/tôi/ta/tớ/mình.
 Giọng thẳng thắn, đời thường, vẫn nghiêm túc về kiến thức. Code + comment vẫn TIẾNG ANH.
 
-## ⚠️ LỖI TOOL: KHÔNG dùng ask_question (nút bấm tương tác)
-Trong môi trường terminal này, tool hỏi tương tác (multiple-choice) LUÔN lỗi "Interactive runtime abort requested".
-→ Mentor sau: hỏi lựa chọn bằng CHỮ trong câu trả lời, để học viên gõ text trả lời. TUYỆT ĐỐI không gọi tool ask_question.
+## ⚠️ LỖI TOOL: KHÔNG dùng ask_question (nút bấm tương tác) — ĐÃ CHẨN ĐOÁN XONG
+Học viên chạy mentor qua `cline` TRONG TERMINAL của Cursor (KHÔNG phải Chat panel IDE).
+→ Terminal agent KHÔNG có UI host để render nút bấm → tool multiple-choice (ask_question) LUÔN abort
+  "Interactive runtime abort requested". Tương tự, nút Compact UI → session CLI orphan → "Compaction failed: has no owner".
+→ Đây là LIMITATION của terminal agent (Cursor 3.11.25 / macOS 26.3.1), KHÔNG phải lỗi code/MCP/project. Đã xác nhận bởi cả agent Cursor.
+→ Mentor sau BẮT BUỘC: (1) TUYỆT ĐỐI không gọi ask_question — hỏi lựa chọn bằng CHỮ, học viên gõ text trả lời.
+  (2) Nén context thì bảo học viên MỞ SESSION MỚI (đọc CONTEXT.md), đừng bấm Compact UI.
+  (3) Không cần xóa cache/reinstall. Muốn dùng nút bấm/compact mượt thì học viên tự chuyển sang Chat panel IDE.
 
 ## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi)
 
@@ -48,24 +53,66 @@ Trong môi trường terminal này, tool hỏi tương tác (multiple-choice) LU
   cả 2 nhánh (ko có user / sai pass) trả CÙNG "Invalid email or password" (chống user enumeration). route POST /login trả 200.
   Tạm trả SafeUser (Bài 4 đổi thành JWT). ĐÃ TEST 4 case PASS: đúng→200; sai pass→401; email ko tồn tại→401 (message giống hệt); thiếu pass→400 Zod.
 
-- 🚧 Bài 4: JWT — ĐANG LÀM DỞ, DỪNG GIỮA CHỪNG. Trạng thái chính xác:
-  • ✅ Bước 1 XONG: đã cài `@fastify/jwt ^10.2.0` (dependencies). Đã thêm `JWT_SECRET="dev-super-secret-change-me-in-production-a1b2c3d4e5f6"`
-    vào apps/api/.env. Đã thêm `JWT_SECRET: z.string().min(16,...)` vào envSchema trong config/env.ts. ĐÃ VERIFY: env hợp lệ load OK; secret <16 ký tự → fail fast. PASS.
-  • 🔴 Bước 2 CHƯA LÀM (học viên chưa gõ, dừng ngay trước bước này): sửa `app.ts` — thêm
-      `import fastifyJwt from "@fastify/jwt";` + `import { env } from "./config/env.js";`
-    và đăng ký plugin TRƯỚC phần register routes: `app.register(fastifyJwt, { secret: env.JWT_SECRET });`
-    → mentor sau: BẮT ĐẦU LẠI TỪ ĐÂY. Hướng dẫn học viên gõ Bước 2, verify server boot OK với plugin, rồi qua Bước 3.
-  • ⏭️ Bước 3 (sau Bước 2): sửa LOGIN trả token. QUYẾT ĐỊNH KIẾN TRÚC ĐÃ CHỐT = CÁCH A:
-      chỉ dùng @fastify/jwt cho CẢ ký + verify (KHÔNG cài jsonwebtoken — đã loại vì thừa).
-      Ký token TẠI ROUTE (route có sẵn `app` → dùng `app.jwt.sign(payload, { expiresIn })`), SERVICE chỉ xác thực user rồi trả user về route.
-      login trả { accessToken (~15m), refreshToken (~7d) }. Payload token chỉ chứa { userId } (KHÔNG để đồ nhạy cảm — payload chỉ base64, ai cũng đọc).
-  • Lý thuyết JWT đã giảng kỹ & học viên ĐÃ NGẤM: JWT = encode(base64, ai đọc cũng được) + sign(chữ ký chống sửa), KHÔNG encrypt.
+- ✅ Bài 4: JWT — XONG HẾT (Bước 1+2+3). Trạng thái chính xác:
+  • ✅ Bước 1: cài `@fastify/jwt ^10.2.0`. Thêm `JWT_SECRET="dev-super-secret-change-me-in-production-a1b2c3d4e5f6"`
+    vào apps/api/.env. Thêm `JWT_SECRET: z.string().min(16,...)` vào envSchema (config/env.ts). Verify fail-fast PASS.
+  • ✅ Bước 2: app.ts có `import fastifyJwt from "@fastify/jwt";` + `import { env } from "./config/env.js";`
+    và `app.register(fastifyJwt, { secret: env.JWT_SECRET })` đăng ký TRƯỚC register routes. (Học viên đã gõ từ trước; CONTEXT cũ ghi nhầm là chưa.)
+  • ✅ Bước 3 (CÁCH A): login route (auth.routes.ts) ký token TẠI ROUTE: `app.jwt.sign({ userId: user.id }, { expiresIn })`
+      → accessToken 15m + refreshToken 7d → trả `{ accessToken, refreshToken }`. SERVICE (auth.service.ts) GIỮ NGUYÊN, chỉ xác thực + trả SafeUser (có id).
+      KHÔNG cài jsonwebtoken. ĐÃ XÓA file rác `lib/jwt.ts` (rỗng — CÁCH A ký ở route nên không cần).
+      ĐÃ TEST: register user mới → login → trả 2 token; decode payload access: {userId,iat,exp} exp-iat=900s(15m), refresh=604800s(7d). PASS.
+  • Lý thuyết JWT học viên ĐÃ NGẤM: JWT = encode(base64, ai đọc cũng được) + sign(chữ ký chống sửa), KHÔNG encrypt.
     encode≠encrypt≠hash. Phải gửi CẢ 3 phần header.payload.signature. Ví dụ "tấm vé xem phim có dấu mộc".
+  • ĐÃ GIẢNG (học viên hỏi "sao trả token qua body mà không set cookie?"): JSON body = linh hoạt (web+mobile+CLI) + chống CSRF,
+    NHƯNG dính XSS nếu lưu localStorage. Cookie httpOnly = chống XSS nhưng dính CSRF + chỉ hợp web same-site. Giai đoạn API thuần chưa FE
+    → chọn body để test curl/Postman + đa client. Mô hình chuẩn (để dành GĐ3/cuối GĐ2): access token trong memory FE, refresh token cookie httpOnly
+    (cần @fastify/cookie + CSRF). Chưa làm bây giờ để tránh nhồi.
 
-**BÀI TIẾP THEO (GĐ2 còn lại — sau khi xong Bài 4):**
-- Bài 5: auth hook (Fastify preHandler/decorate) verify token bằng `request.jwtVerify()` → gắn request.user={userId}. Route cần auth dùng hook này.
-- Bài 6: Áp vào Task — thay SEED_USER_ID bằng request.user.userId (sửa ~1 dòng task.service). Fix seed password "placeholder"→hash.
-- Bài 7: RBAC (enum Role OWNER/ADMIN/MEMBER) → vd chỉ author/OWNER xóa task = 403 thật. (+ nợ: validate :id bằng Zod ở params.)
+- ✅ Bài 5: AUTH HOOK — XONG HẾT. Kiến trúc chuẩn Fastify (fastify-plugin):
+  • `types/fastify-jwt.d.ts`: declare module "@fastify/jwt" (payload {userId} lúc ký + user {userId,iat,exp} sau verify — iat/exp do JWT tự chèn qua expiresIn)
+    + declare module "fastify" (thêm `authenticate` vào FastifyInstance). Nhớ `import "@fastify/jwt"` đầu file = module augmentation.
+  • `hooks/authenticate.ts`: hàm hook thuần `authenticate(request,reply)` → try `request.jwtVerify()` (auto đọc header Authorization Bearer + verify chữ ký/hạn, gán request.user)
+    catch → `throw unauthorized("Unauthorized")` (AppError 401 qua error handler tập trung, KHÔNG tự send — vì lỗi jwt "trần" không mang status, để rơi xuống error handler chung sẽ thành 500 SAI).
+  • `plugins/auth.plugin.ts`: `export const authPlugin = fp(async (app) => { app.decorate("authenticate", authenticate); })`.
+    Đã cài `fastify-plugin`. BỌC fp() để phá encapsulation → decorator leo lên ROOT scope → mọi route con thấy `app.authenticate`.
+  • `app.ts`: `app.register(authPlugin)` SAU register(fastifyJwt), TRƯỚC routes. (app.ts chỉ WIRING, logic ở hooks/, đăng ký ở plugins/.)
+  • `routes/task.routes.ts`: `app.addHook("preHandler", app.authenticate)` 1 dòng đầu hàm → bảo vệ CẢ 5 route Task. Nhờ ENCAPSULATION hook chỉ áp trong scope taskRoutes, KHÔNG lan sang auth/health (nên /login vẫn gọi được không cần token).
+  • ĐÃ TEST 4/4 PASS: GET tasks no-token→401; login→ra accessToken; GET tasks + Bearer token→200; token rác→401.
+  • LÝ THUYẾT ĐÃ NGẤM: encapsulation Fastify (mỗi register()=hộp con; con đọc được đồ cha, đồ sinh trong con KHÔNG leo ngược lên cha/anh em);
+    fp()="plugin merge thẳng vào cha, không tạo hộp con"; quên fp → KHÔNG lỗi lúc boot, chỉ lỗi RUNTIME khi request chạm app.authenticate (TypeError not a function → 500).
+    addHook(scope) vs per-route preHandler (mảng, cho phép [authenticate, authorize] tuần tự AuthN→AuthZ ở Bài 7).
+
+- ✅ Bài 6: ÁP AUTH VÀO TASK — XONG. Đã trả nợ SEED_USER_ID:
+  • task.service.ts: `create(data, authorId: string)` → `author: { connect: { id: authorId } }`. DỌN RÁC: xóa `import "dotenv/config"`, `const SEED_USER_ID`, khối `if(!SEED_USER_ID) throw`.
+    authorId là param BẮT BUỘC (không optional) → TS ép route phải truyền. Service giờ sạch env, không biết userId từ đâu ra (token/session/test) → testable.
+  • task.routes.ts: route POST → `taskService.create(data, request.user.userId)`. request.user có nhờ authenticate hook + type Bài 5.
+  • ĐÃ TEST PASS: login jwt-test@example.com → tạo task → authorId == userId trong token (5474c7ef-...). Task gắn ĐÚNG người đăng nhập, không còn SEED_USER_ID cứng.
+  • CHECKPOINT (đáp): truyền request.user.userId (param) thay vì cả request vào service — vì service phải SẠCH HTTP: truyền request thì service buộc chặt Fastify, không unit-test/tái dùng (cron/queue) được, vi phạm separation of concerns.
+  • ⚠️ NỢ CÒN LẠI: seed.ts password "placeholder" chưa hash → seed user KHÔNG login được (nên test bằng user register mới). Để dành fix lúc Bài 7 (cần nhiều user role khác nhau → seed lại đàng hoàng).
+
+- ✅ Bài 7: RBAC (Mức B — role đầy đủ qua Membership) — XONG. TEST 4/4 PASS.
+  • QUY TẮC (OR): sửa/xóa task được NẾU (là author) HOẶC (OWNER/ADMIN của workspace chứa task). else 403.
+  • LOGIC AUTHOR-FIRST (học viên tự phân tích data distribution chọn): đa số user=MEMBER, đa số thao tác=sửa task MÌNH
+    → check author TRƯỚC (authorId có sẵn trong query task → FREE, đa số dừng đây), CHỈ khi không phải author mới query role.
+    Bài học: "đúng mô hình" (role rộng→hẹp) ≠ "tối ưu vận hành" (author-first). Với OR + short-circuit, thứ tự KHÔNG đổi kết quả, chỉ đổi số query.
+  • KIẾN TRÚC (đúng layered — học viên BẮT LỖI mentor giữa chừng): permission.service KHÔNG được chạm prisma (chỉ repository chạm DB).
+    - `repositories/task.repository.ts`: thêm `findAuthorAndWorkspaceId(id)` — select gọn { authorId, board.project.workspaceId } (task ko có trực tiếp workspaceId → lồng qua board→project).
+    - `repositories/membership.repository.ts` (MỚI): `findByUserAndWorkspace(userId, workspaceId)` → findUnique composite key `userId_workspaceId` (từ @@unique) select {role}, trả null nếu ko thuộc workspace.
+    - `services/permission.service.ts`: `assertCanModifyTask(taskId, userId)` — GỌI 2 repo, chỉ chứa LOGIC quyết định. Kiểu "assert": đủ quyền→return im lặng; ko→throw. null task→notFound(404); author→return; role OWNER/ADMIN→return (membership?.role dùng ?. chắn null); else→forbidden(403).
+    - `lib/errors.ts`: thêm `forbidden()`=AppError(403). (401="ko biết mày là ai"/chưa auth → authenticate; 403="biết rồi nhưng ko đủ quyền" → RBAC.)
+    - `services/task.service.ts`: update/delete nhận thêm `userId`, gọi `assertCanModifyTask` TRƯỚC repo.update/delete (check-before-action: nếu check sau thì data đã bị sửa/xóa dù trả 403). BỎ getById thừa (assert đã throw 404). getById route GET giữ nguyên (đọc ko cần quyền modify).
+    - `routes/task.routes.ts`: PATCH/DELETE truyền `request.user.userId` xuống service (giống POST Bài 6).
+  • SEED (fix nợ password + tạo data test RBAC): `prisma/seed.ts` viết lại — deleteMany con→cha (FK), hashPassword("password123"),
+    3 user owner/admin/member@taskflow.dev + Membership 3 role cùng 1 workspace + 2 task (member's + owner's). Login được bằng password123.
+    IDs hiện tại: MEMBER=b47d5e6f... MEMBER_TASK=b89157ff... OWNER=4c8334a6... OWNER_TASK=ed12018d... ADMIN=dbfda8d3... BOARD=d635ea08...
+  • TEST 4/4 PASS: MEMBER sửa task mình→200; MEMBER sửa task owner→403; OWNER sửa task member→200; ADMIN sửa task member→200.
+  • ⚠️ NỢ THIẾT KẾ (YAGNI — CHƯA làm, đợi có resource thứ 2-3 thấy LẶP mới refactor theo Rule of Three):
+    permission.service giờ chỉ có assertCanModifyTask. Tương lai nhiều resource (board/project/workspace) → cân nhắc:
+    H1 tách permission theo resource; H2 hàm getUserRole chung + policy riêng; H3 CASL/ability object. Giờ giữ nguyên, ko over-engineer.
+  • Nợ cũ vẫn treo: validate :id bằng Zod ở params (hiện `as {id:string}`).
+
+**BÀI TIẾP THEO (GĐ2 còn lại):**
 - Bài 8 (cuối GĐ2): rate-limit `@fastify/rate-limit`.
 
 **Trước khi code GĐ2, chạy lại môi trường:** `docker compose up -d` (Postgres). Prisma Client đã generate sẵn.

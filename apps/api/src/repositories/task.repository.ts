@@ -11,15 +11,34 @@ export const taskRepository = {
         return prisma.task.findMany({ orderBy: { createdAt: "desc" } });
     },
     //Find one task by id, or null if not found
-    findById(id:string) {
+    findById(id: string) {
         return prisma.task.findUnique({ where: { id } });
     },
     //Update a task by id with partial data
-    update(id:string, data: Prisma.TaskUpdateInput) {
+    update(id: string, data: Prisma.TaskUpdateInput) {
         return prisma.task.update({ where: { id }, data });
     },
     //Delete a task by id
-    delete(id:string) {
+    delete(id: string) {
         return prisma.task.delete({ where: { id } });
+    },
+
+    //Find the authorId and workspaceId of a task by id
+    findAuthorAndWorkspaceId(id: string) {
+        return prisma.task.findUnique({
+            where: { id },
+            select: {
+                authorId: true,
+                board: {
+                    select: {
+                        project: {
+                            select: {
+                                workspaceId: true,
+                            }
+                        }
+                    }
+                }
+            }
+        })
     }
 }
