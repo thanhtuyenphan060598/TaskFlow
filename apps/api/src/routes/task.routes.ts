@@ -16,21 +16,21 @@ export async function taskRoutes(app: FastifyInstance) {
   });
 
   app.get("/:id", async (request) => {
-    const { id } = taskIdParamSchema.parse(request.params);
-    const task = await taskService.getById(id, request.user.userId);
+    const { id: taskIdParam } = taskIdParamSchema.parse(request.params);
+    const task = await taskService.getById(taskIdParam, request.user.userId);
     return task;
   });
 
   app.patch("/:id", async (request) => {
-    const { id } = taskIdParamSchema.parse(request.params);
+    const { id: taskIdParam } = taskIdParamSchema.parse(request.params);
     const data = updateTaskSchema.parse(request.body);
-    const task = await taskService.update(id, data, request.user.userId);
+    const task = await taskService.update(taskIdParam, data, request.user.userId);
     return task;
   });
 
   app.delete("/:id", async (request, reply) => {
-    const { id } = taskIdParamSchema.parse(request.params);
-    await taskService.delete(id, request.user.userId);
+    const { id: taskIdParam } = taskIdParamSchema.parse(request.params);
+    await taskService.delete(taskIdParam, request.user.userId);
     return reply.code(204).send();
   });
 }

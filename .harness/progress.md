@@ -2,87 +2,74 @@
 
 ## Current State
 
-**Last Updated:** 2026-07-20 14:36
-**Active Feature:** feat-0.3-iam — Mảng 1 Multi-tenancy. **Mảng 1a READ + Mảng 1b WRITE (Việc 4) DONE + TEST PASS.** Mảng 1 Multi-tenancy Task coi như KHÉP.
+**Last Updated:** 2026-07-20 21:10
+**Active Feature:** feat-0.3-iam — Mảng 1 Multi-tenancy **KHÉP + harden PATCH/hardcode**. Next = Mảng 2 org tree (closure table).
 **GĐ0.1 Security + GĐ0.2 Monorepo:** ĐÃ KHÉP.
 
-## ⏸️ ĐIỂM DỪNG — bàn giao agent/mentor mới
+## ⏸️ ĐIỂM DỪNG — bàn giao agent/mentor mới (tối 2026-07-20)
 
-**Mảng 1b WRITE (Việc 4 — create boardId scope) — ✅ DONE (test 2026-07-20):**
+### Session tối — review + fix lỗ PATCH / hardcode
 
-Bịt lỗ hổng IDOR: member POST task với boardId của workspace mình KHÔNG thuộc → giờ trả 404.
+**Đã làm (học viên gõ, mentor review):**
 
-| Case                                          | Mong | Kết quả |
-| --------------------------------------------- | ---- | ------- |
-| C-CREATE-1 member POST BOARD_B (cross-tenant) | 404  | ✅ 404  |
-| C-CREATE-2 member POST BOARD_A (hợp lệ)       | 201  | ✅ 201  |
-| C-CREATE-3 member POST board UUID random      | 404  | ✅ 404  |
+| Việc | Chi tiết | Verify |
+|------|----------|--------|
+| Bịt PATCH `boardId` | `updateTaskSchema = createTaskSchema.omit({ boardId: true }).partial().strict()` | `tsc` EXIT 0; **curl C-PATCH chưa chạy** |
+| Type từ shared | `task.service` dùng `CreateTaskSchema` / `UpdateTaskSchema` | OK |
+| Role enum | `permission.service` dùng `Role` + `canModifyRoles` | OK |
+| Xóa footgun | bỏ `taskRepository.findAll()` | OK |
+| Env cleanup | `env.ts` chỉ `DATABASE_URL`, `JWT_SECRET`, `PORT?`; bỏ `SEED_USER_ID` | `.env` đủ 3 dòng |
 
-Verify thêm: `tsc --noEmit` EXIT 0 (compile sạch).
+**Lý thuyết lỗ PATCH (đừng quên):**
 
-**Code Việc 4 (học viên gõ, mentor review):**
+- `assertCanModifyTask` chỉ check task **hiện tại** (author / OWNER|ADMIN workspace cũ).
+- Body `boardId` từng lọt vì `.partial()` từ create → Prisma đổi FK board → task nhảy tenant (IDOR).
+- Fix đúng product: PATCH không đổi board; move board = API riêng + assert sau.
 
-1. `board.repository.ts` (FILE MỚI) — `findWorkspaceIdByBoardId(boardId)` select project.workspaceId. Tách file riêng đúng SRP (KHÔNG nợ kỹ thuật — học viên chọn tốt hơn phương án tạm của mentor).
-2. `permission.service.assertMemberOfWorkspaceForBoard(boardId, userId)` — board null→404; không member→404. 2 message GIỐNG NHAU (`Board with id ... not found`) chống info-disclosure.
-3. `task.service.create` → `async` + gọi assert TRƯỚC `taskRepository.create` (fail-fast, không ghi DB rồi mới check).
-4. `task.routes` POST đã có `await taskService.create` sẵn — không sửa.
+**Curl gợi ý buổi sau (port 3001, `/api/v1`):**
 
-**Bài học lý thuyết Việc 4:**
-
-- 404 (cross-tenant, giấu tài nguyên) vs 403 (trong tenant, thiếu quyền) — Việc 4 dùng 404 vì cross-tenant.
-- Side-effect order: check TRƯỚC ghi DB (đừng create rồi rollback).
-- Info-disclosure: message board-not-exist == board-cross-tenant.
-- SRP: query prisma.board → thuộc boardRepository, không nhét vào taskRepository.
-
-**Mảng 1a READ isolation — ✅ DONE trước đó (C1-C4 PASS):**
-findAllForUser (memberships.some), assertMemberOfWorkspaceForTask (404), getAll/getById scoped, seed Workspace A+B.
-
-**Seed IDs (đổi mỗi lần seed — chạy lại lấy IDs mới):**
-
-```
-password = password123
-MEMBER = member@taskflow.dev
-OUTSIDER = outsider@taskflow.dev
+```bash
+# login member → TOKEN
+# C-PATCH-1: PATCH body có boardId → mong 400
+# C-PATCH-2: PATCH { "title": "..." } → mong 200
 ```
 
-Refresh seed: `cd apps/api && pnpm exec tsx prisma/seed.ts` (in ra BOARD_A/BOARD_B/task IDs mới).
+### Mảng 1a/1b (sáng) — đã PASS trước đó
+
+- READ C1–C4 PASS; WRITE create C-CREATE-1/2/3 PASS.
+- Seed: `member@taskflow.dev` / `outsider@taskflow.dev` / `password123` — IDs đổi mỗi lần seed.
 
 ## Status
 
 ### What's Done
 
 - [x] GĐ0, GĐ1, GĐ2 Auth Bài 1-7
-- [x] GĐ0.1 Security (rate-limit + refresh + validate :id)
-- [x] GĐ0.2 Monorepo
-- [x] feat-0.3-iam Mảng 1a READ isolation + test 5/5 PASS
-- [x] feat-0.3-iam Mảng 1b WRITE (Việc 4 create boardId scope) + test 3/3 PASS + tsc EXIT 0
+- [x] GĐ0.1 Security + GĐ0.2 Monorepo
+- [x] feat-0.3-iam Mảng 1a READ + 1b WRITE create
+- [x] Harden: omit boardId trên update + shared types + Role enum + xóa findAll
 
 ### What's In Progress
 
-- (trống) — Mảng 1 Multi-tenancy Task đã KHÉP
+- feat-0.3-iam còn Mảng 2/3/4
+- Optional: curl confirm C-PATCH
 
 ### What's Next
 
-1. Mảng 2 org tree (closure table)
-2. Mảng 3 RBAC → ABAC
-3. Mảng 4 audit log nền
-4. feat-0.4-design-system
+1. (Optional) Curl C-PATCH 400/200
+2. **Mảng 2 org tree (closure table)** — mentor lý thuyết trước
+3. Mảng 3 RBAC→ABAC
+4. Mảng 4 audit log
+5. feat-0.4-design-system
 
 ## Blockers / Risks
 
-- [ ] Nợ refresh token nâng cao (rotation/revoke) — hoãn GĐ0.3 / Redis
-- [ ] Access token cũng qua /refresh (cùng secret) — cần type access/refresh trong payload, hoãn GĐ0.3
-
-## Evidence of Completion (Mảng 1)
-
-- [x] Mảng 1a READ: C1-C4 isolation curl PASS (2026-07-20)
-- [x] Mảng 1b WRITE: C-CREATE-1/2/3 PASS (BOARD_B→404, BOARD_A→201, random→404) + tsc EXIT 0 (2026-07-20)
-- Server port **3001**, PREFIX `/api/v1`
+- [ ] Nợ refresh token rotation/revoke — hoãn
+- [ ] Access token qua `/auth/refresh` (cùng secret) — cần `type` trong payload, hoãn
+- [ ] Curl C-PATCH chưa có evidence PASS trên harness
 
 ## Notes for Next Session
 
-1. Đọc `AGENTS.md` + `.harness/CONTEXT.md` (mục ⏸️) + `feature_list.json` (current_focus)
-2. `./.harness/init.sh` + `docker compose up -d`
-3. Mảng 1 Multi-tenancy Task đã xong — bắt đầu Mảng 2 org tree (mentor giải thích closure table trước, học viên gõ)
-4. Pattern đã thiết lập: permission.service assert* (404 cross-tenant / 403 in-tenant), repository per-model (task/board/membership), service gọi assert TRƯỚC side-effect
-5. Xưng tao/mày. Không ask_question nút bấm. Curl ngắn từng lệnh.
+1. Đọc `AGENTS.md` + `.harness/CONTEXT.md` (mục ⏸️) + `feature_list.json`
+2. `./.harness/init.sh` (prisma generate nếu thiếu `src/generated/prisma`)
+3. Xưng tao/mày; học viên tự gõ; không ask_question nút bấm
+4. Bắt đầu Mảng 2 sau (hoặc trong) verify C-PATCH

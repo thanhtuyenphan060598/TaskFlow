@@ -94,10 +94,10 @@
     {
       "id": "feat-0.3-iam",
       "name": "GĐ0.3 IAM + Org Structure",
-      "description": "Multi-tenancy, org tree (closure table), RBAC→ABAC, audit log nền. Mảng 1a READ (getAll/getById tenant isolation) DONE + test PASS. Mảng 1b WRITE (create boardId scope) DONE + test PASS. Mảng 2/3/4 chưa làm.",
+      "description": "Multi-tenancy, org tree (closure table), RBAC→ABAC, audit log nền. Mảng 1a/1b DONE + test PASS. Harden PATCH omit boardId + shared types + Role enum DONE (tsc OK; curl C-PATCH optional chưa chạy). Mảng 2/3/4 chưa làm.",
       "dependencies": ["feat-0.2-monorepo"],
       "status": "in-progress",
-      "evidence": "MẢNG 1a READ DONE 2026-07-20: C1-C4 isolation PASS (findAllForUser, assertMemberOfWorkspaceForTask 404 cross-tenant, getAll/getById scoped). MẢNG 1b WRITE DONE 2026-07-20: bịt lỗ hổng IDOR create cross-tenant. Code học viên gõ: board.repository.ts findWorkspaceIdByBoardId (tách file riêng đúng SRP, KHÔNG nợ kỹ thuật); permission.assertMemberOfWorkspaceForBoard (404 giấu, message giống nhau cho case board-not-exist vs cross-tenant chống info-disclosure); task.service.create → async + assert TRƯỚC create (fail-fast, ko ghi DB rồi mới check). Verify: tsc --noEmit EXIT 0. TEST curl 3/3 PASS: C-CREATE-1 member POST BOARD_B(cross-tenant)→404; C-CREATE-2 member POST BOARD_A(hợp lệ)→201; C-CREATE-3 board UUID random→404. NEXT: khép Mảng 1 → Mảng 2 org tree / Mảng 3 ABAC / Mảng 4 audit log. Chi tiết .harness/progress.md"
+      "evidence": "MẢNG 1a READ 2026-07-20: C1-C4 PASS. MẢNG 1b WRITE create: C-CREATE-1/2/3 PASS + board.repository + assertMemberOfWorkspaceForBoard + create assert trước side-effect. HARDEN tối 2026-07-20: updateTaskSchema=createTaskSchema.omit({boardId:true}).partial().strict() (bịt IDOR PATCH move board cross-tenant); task.service dùng CreateTaskSchema/UpdateTaskSchema; permission dùng Role enum; xóa findAll(); env bỏ SEED_USER_ID. tsc EXIT 0. Curl C-PATCH (boardId→400, title→200) CHƯA evidence. NEXT: optional C-PATCH rồi Mảng 2 org tree (closure table). Chi tiết .harness/progress.md + CONTEXT mục ⏸️"
     },
     {
       "id": "feat-0.4-design-system",

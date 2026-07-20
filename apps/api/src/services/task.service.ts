@@ -1,21 +1,10 @@
 import { taskRepository } from "../repositories/task.repository.js";
-import { notFound } from "../lib/errors.js";
 import type { Prisma } from "../generated/prisma/client.js";
 import { permissionService } from "./permission.service.js";
-
-type CreateTaskData = {
-  title: string;
-  boardId: string;
-  description?: string;
-  dueDate?: Date | null;
-  status?: "TODO" | "IN_PROGRESS" | "DONE";
-  priority?: "LOW" | "MEDIUM" | "HIGH";
-};
-
-type UpdateTaskData = Partial<CreateTaskData>;
+import type { CreateTaskSchema, UpdateTaskSchema } from "@taskflow/shared";
 
 export const taskService = {
-  async create(data: CreateTaskData, authorId: string) {
+  async create(data: CreateTaskSchema, authorId: string) {
     await permissionService.assertMemberOfWorkspaceForBoard(data.boardId, authorId);
     const input: Prisma.TaskCreateInput = {
       title: data.title,
@@ -33,18 +22,18 @@ export const taskService = {
     return taskRepository.findAllForUser(userId);
   },
 
-  async getById(id: string, userId: string) {
-    await permissionService.assertMemberOfWorkspaceForTask(id, userId);
-    return taskRepository.findById(id);
+  async getById(taskId: string, userId: string) {
+    await permissionService.assertMemberOfWorkspaceForTask(taskId, userId);
+    return taskRepository.findById(taskId);
   },
 
-  async update(id: string, data: UpdateTaskData, userId: string) {
-    await permissionService.assertCanModifyTask(id, userId);
-    return taskRepository.update(id, data);
+  async update(taskId: string, data: UpdateTaskSchema, userId: string) {
+    await permissionService.assertCanModifyTask(taskId, userId);
+    return taskRepository.update(taskId, data);
   },
 
-  async delete(id: string, userId: string) {
-    await permissionService.assertCanModifyTask(id, userId);
-    return taskRepository.delete(id);
+  async delete(taskId: string, userId: string) {
+    await permissionService.assertCanModifyTask(taskId, userId);
+    return taskRepository.delete(taskId);
   }
 };

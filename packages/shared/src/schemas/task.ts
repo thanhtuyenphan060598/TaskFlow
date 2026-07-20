@@ -11,12 +11,11 @@ export const createTaskSchema = z
     dueDate: z.coerce.date().nullable().optional(),
     status: taskStatusSchema.optional(),
     priority: taskPrioritySchema.optional()
-  })
-  .strict();
+  }).strict();
 export type CreateTaskSchema = z.infer<typeof createTaskSchema>;
 
 export const taskIdParamSchema = z.object({ id: z.uuid("Invalid task id") }).strict();
 export type TaskIdParamSchema = z.infer<typeof taskIdParamSchema>;
 
-export const updateTaskSchema = createTaskSchema.partial();
+export const updateTaskSchema = createTaskSchema.omit({ boardId: true }).partial().strict();
 export type UpdateTaskSchema = z.infer<typeof updateTaskSchema>;

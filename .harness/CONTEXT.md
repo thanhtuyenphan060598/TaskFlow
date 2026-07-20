@@ -22,39 +22,36 @@ Học viên chạy mentor qua `cline` TRONG TERMINAL của Cursor (KHÔNG phải
 (2) Nén context thì bảo học viên MỞ SESSION MỚI (đọc CONTEXT.md), đừng bấm Compact UI.
 (3) Không cần xóa cache/reinstall. Muốn dùng nút bấm/compact mượt thì học viên tự chuyển sang Chat panel IDE.
 
-## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi 2026-07-20)
+## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi 2026-07-20 tối)
 
-**Vừa xong:** feat-0.3-iam **Mảng 1 Multi-tenancy (READ path)** — tenant isolation cho `GET /tasks` và `GET /tasks/:id`. TEST isolation 5/5 case PASS (2026-07-20, học viên chạy curl).
+**Vừa xong (session tối):** Review cứng Mảng 1 + **bịt lỗ PATCH `boardId`** + bỏ hardcode enum/type. `tsc --noEmit` EXIT 0. Curl C-PATCH (boardId→400 / title→200) **chưa chạy xong** — buổi sau verify nhanh rồi sang Mảng 2.
 
-**ĐANG LÀM: GĐ0.3 IAM — feat-0.3-iam (in-progress). Tiến độ Mảng 1:**
+**ĐANG LÀM: GĐ0.3 IAM — feat-0.3-iam (in-progress).**
 
-- ✅ **Mảng 1a — READ isolation (getAll/getById):** XONG + TEST PASS.
-  • `task.repository.findAllForUser(userId)`: task WHERE workspace có `memberships: { some: { userId } }` (Board→Project→Workspace).
-  • `permission.service.assertMemberOfWorkspaceForTask(taskId, userId)`: không phải member workspace chứa task → `notFound` (404, KHÔNG 403 — giấu cross-tenant).
-  • `task.service`: `getAll(userId)` → findAllForUser; `getById(id, userId)` → assert trước.
-  • `task.routes`: GET "/" và GET "/:id" truyền `request.user.userId`.
-  • Seed: Workspace A (owner/admin/member) + Workspace B (outsider@taskflow.dev) + task riêng mỗi bên.
-  • **TEST PASS (seed 2026-07-20):**
-  - C1 member GET /tasks → 2 task workspace A (Owner's + Member's), KHÔNG có Outsider's task.
-  - C1b outsider GET /tasks → CHỈ Outsider's task (7681f831-...).
-  - C2 member GET outsider task → 404 `"Task with id ... not found"`.
-  - C3 outsider GET member task (681bdfa6-...) → 404.
-  - C4 member GET task mình → 200.
-    • Seed IDs lần test (đổi mỗi lần seed — chạy lại `pnpm exec tsx prisma/seed.ts` trong apps/api):
-    MEMBER=member@taskflow.dev | OUTSIDER=outsider@taskflow.dev | password=password123
-    MEMBER_TASK=681bdfa6-2341-428d-8c15-23aafe46f522 | OUTSIDER_TASK=7681f831-6eae-4bf3-986a-15ee971012f0
-    BOARD_A=aa555075-293d-4bc1-9d4d-447cf29da13f | BOARD_B=04f72b9b-57c5-4781-85b5-d1646f46ac55
+### Mảng 1 Multi-tenancy Task — coi như KHÉP (code), thiếu curl PATCH optional
 
-- ✅ **Mảng 1b — WRITE isolation (Việc 4 — create boardId scope):** XONG + TEST 3/3 PASS + tsc EXIT 0 (2026-07-20). Lỗ hổng IDOR đã bịt (member biết UUID board tenant khác POST task vào → giờ 404). Code: `board.repository.ts` (mới) findWorkspaceIdByBoardId (SRP, ko nợ); `permission.assertMemberOfWorkspaceForBoard` (board null→404, ko member→404, 2 message giống nhau chống info-disclosure); `task.service.create` async + assert TRƯỚC create. TEST: BOARD_B(cross-tenant)→404, BOARD_A(hợp lệ)→201, board random→404. Bài học: 404 vs 403, side-effect order, info-disclosure, SRP, Prisma findUnique trả null.
+- ✅ **1a READ** — getAll/getById tenant-scoped. TEST curl 5/5 PASS (sáng 2026-07-20).
+- ✅ **1b WRITE create** — `assertMemberOfWorkspaceForBoard` trước create. TEST curl 3/3 PASS.
+- ✅ **1c harden (tối 2026-07-20) — học viên tự gõ:**
+  1. **Lỗ PATCH `boardId` (IDOR move cross-tenant):** `updateTaskSchema = createTaskSchema.partial()` từng cho phép gửi `boardId` → assert chỉ check task CŨ, Prisma update FK board đích không assert. Fix: `createTaskSchema.omit({ boardId: true }).partial().strict()` — PATCH kèm `boardId` → 400. Move board = feature riêng sau.
+  2. **Hardcode:** `task.service` dùng `CreateTaskSchema` / `UpdateTaskSchema` từ `@taskflow/shared` (bỏ union status/priority tự viết). `permission` dùng `Role` enum Prisma + `canModifyRoles` (OWNER/ADMIN).
+  3. Xóa `taskRepository.findAll()` (footgun list all-tenant).
+  4. `env.ts`: bỏ `SEED_USER_ID` khỏi schema (không còn dùng). `.env` cần `DATABASE_URL` + `JWT_SECRET` (≥16); `PORT` optional default 3001.
 
-- ⬜ Mảng 2: org tree (closure table). Mảng 3: RBAC→ABAC. Mảng 4: audit log. (chưa làm)
+**Bài học session tối (giữ):**
 
-**Đã khép trước đó (không lặp lại chi tiết):** GĐ0 Foundation, GĐ1 CRUD Task, GĐ2 Auth (Bài 1-7), GĐ0.1 Security (rate-limit + refresh + validate :id), GĐ0.2 Monorepo.
+- Assert quyền ≠ validate mọi field body. `assertCanModifyTask` không nhìn `boardId` trong PATCH → lỗ “move sang board tenant khác”.
+- `.partial()` trên create schema = copy mù nghiệp vụ create→update; omit field không thuộc update.
+- `process.env` = túi process (OS/shell + dotenv merge). Zod validate `process.env` sau merge, **không** đọc file `.env` trực tiếp. dotenv mặc định không đè key đã có (kể cả `""`). Máy học viên: OS không có JWT/DB/PORT → app lấy từ `apps/api/.env`.
+
+- ⬜ **Mảng 2:** org tree (closure table). ⬜ Mảng 3 RBAC→ABAC. ⬜ Mảng 4 audit log.
+
+**Đã khép trước đó:** GĐ0 Foundation, GĐ1 CRUD Task, GĐ2 Auth (Bài 1-7), GĐ0.1 Security, GĐ0.2 Monorepo, Mảng 1a/1b.
 
 **BÀI TIẾP THEO cho agent/mentor mới:**
 
-1. Việc 4: scope `create()` theo `boardId` (lỗ hổng WRITE còn lại của Mảng 1).
-2. Sau khi Việc 4 + test PASS → coi Mảng 1 Multi-tenancy Task KHÉP; sang org tree / ABAC / audit.
+1. (Optional 5 phút) Curl C-PATCH: PATCH +`boardId`→400; PATCH chỉ `title`→200. Seed: `cd apps/api && pnpm exec tsx prisma/seed.ts`.
+2. **Mảng 2 org tree** — mentor giải thích closure table trước, học viên gõ (chưa bắt đầu code).
 
 **Cách mentor (BẮT BUỘC giữ):** mentor CHỈ hướng dẫn + giải thích + review; HỌC VIÊN tự gõ mọi code/lệnh.
 Tài liệu (file này) mentor viết hộ. Code tiếng Anh. Đi từng bước nhỏ. Checkpoint câu hỏi mỗi bài.
@@ -108,11 +105,12 @@ LIÊN THÔNG "hệ sinh thái" (ví dụ dòng chảy xuyên app): Sales chốt 
 
 ### GĐ0.3 IAM — feat-0.3-iam (ĐANG LÀM):
 
-- ✅ **Mảng 1a READ isolation** — getAll/getById tenant-scoped. TEST 5/5 PASS 2026-07-20 (chi tiết mục ⏸️ ĐIỂM DỪNG).
-- ✅ **Mảng 1b WRITE isolation (Việc 4)** — scope `create(boardId)` theo workspace membership. TEST 3/3 PASS + tsc EXIT 0 2026-07-20.
+- ✅ **Mảng 1a READ isolation** — getAll/getById tenant-scoped. TEST 5/5 PASS 2026-07-20.
+- ✅ **Mảng 1b WRITE create** — scope `create(boardId)`. TEST 3/3 PASS + tsc EXIT 0.
+- ✅ **Mảng 1c harden** — omit `boardId` trên update; shared types; Role enum; xóa findAll. tsc EXIT 0; curl C-PATCH optional chưa chạy (2026-07-20 tối).
 - ⬜ Mảng 2 org tree (closure table). Mảng 3 RBAC→ABAC. Mảng 4 audit log.
 
-ĐIỂM ĐANG ĐỨNG: GĐ0.3 IAM — Mảng 1 Multi-tenancy Task KHÉP (READ+WRITE); Mảng 2 org tree là bước kế tiếp.
+ĐIỂM ĐANG ĐỨNG: GĐ0.3 IAM — Mảng 1 Task (READ+WRITE+harden) xong về code; next = Mảng 2 org tree.
 (Mục 5 "Lộ Trình 10 Giai Đoạn" bên dưới là roadmap CŨ — GIỮ LÀM THAM KHẢO, roadmap CHÍNH = mục 0-BIS.)
 
 ## 1. Profile Học Viên

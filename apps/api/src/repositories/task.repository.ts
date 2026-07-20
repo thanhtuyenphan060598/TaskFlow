@@ -6,27 +6,23 @@ export const taskRepository = {
   create(data: Prisma.TaskCreateInput) {
     return prisma.task.create({ data });
   },
-  //Return all tasks (newest first)
-  findAll() {
-    return prisma.task.findMany({ orderBy: { createdAt: "desc" } });
-  },
   //Find one task by id, or null if not found
-  findById(id: string) {
-    return prisma.task.findUnique({ where: { id } });
+  findById(taskId: string) {
+    return prisma.task.findUnique({ where: { id: taskId } });
   },
   //Update a task by id with partial data
-  update(id: string, data: Prisma.TaskUpdateInput) {
-    return prisma.task.update({ where: { id }, data });
+  update(taskId: string, data: Prisma.TaskUpdateInput) {
+    return prisma.task.update({ where: { id: taskId }, data });
   },
   //Delete a task by id
-  delete(id: string) {
-    return prisma.task.delete({ where: { id } });
+  delete(taskId: string) {
+    return prisma.task.delete({ where: { id: taskId } });
   },
 
   //Find the authorId and workspaceId of a task by id
-  findAuthorAndWorkspaceId(id: string) {
+  findAuthorAndWorkspaceId(taskId: string) {
     return prisma.task.findUnique({
-      where: { id },
+      where: { id: taskId },
       select: {
         authorId: true,
         board: {

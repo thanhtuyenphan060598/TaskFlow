@@ -2,45 +2,44 @@
 
 ## Current Objective
 
-- Goal: feat-0.3-iam Mảng 1 Multi-tenancy — READ path done; làm Việc 4 WRITE (create boardId scope).
-- Current status: Mảng 1a getAll/getById isolation TEST 5/5 PASS (2026-07-20).
-- Branch: uncommitted local changes (harness docs updated this session)
+- Goal: feat-0.3-iam — sau Mảng 1 (multi-tenancy Task) → **Mảng 2 org tree (closure table)**.
+- Current status: Mảng 1a/1b DONE + harden PATCH/hardcode DONE (`tsc` OK). Curl C-PATCH optional chưa chạy.
+- Branch: local changes (code harden + harness) — chưa commit trừ khi học viên yêu cầu.
 
-## Completed This Session
+## Completed This Session (tối 2026-07-20)
 
-- [x] Verify tenant isolation READ path (C1-C4 curl tests) — all PASS
-- [x] Học viên hiểu multi-tenancy: member thấy hết task trong workspace, không cross-tenant; 404 giấu existence
-- [x] Cập nhật harness docs cho agent tiếp theo
+- [x] Review Mảng 1: lỗ PATCH `boardId` (IDOR), hardcode status/role, footgun `findAll`
+- [x] Học viên fix: `updateTaskSchema` omit `boardId` + `.partial().strict()`
+- [x] Học viên: `CreateTaskSchema`/`UpdateTaskSchema`; `Role` enum; xóa `findAll`
+- [x] Lý thuyết: `process.env` vs `.env` / dotenv merge (không đè key đã có)
+- [x] Cập nhật harness (CONTEXT / progress / feature_list / handoff)
 
 ## Verification Evidence
 
 | Case | Expected | Result |
 |------|----------|--------|
-| C1 member GET /tasks | Chỉ task workspace A | PASS (2 tasks, no Outsider's) |
-| C1b outsider GET /tasks | Chỉ Outsider's task | PASS |
-| C2 member → outsider task id | 404 | PASS |
-| C3 outsider → member task id | 404 | PASS |
-| C4 member → own task id | 200 | PASS |
+| tsc `--noEmit` (apps/api) | EXIT 0 | PASS |
+| C-PATCH boardId in body | 400 | chưa chạy |
+| C-PATCH title only | 200 | chưa chạy |
+| Mảng 1a/1b curl (sáng) | PASS | PASS (đã ghi trước) |
 
-## Files Involved (Mảng 1 — đã có, không sửa thêm session này)
+## Files Touched (harden)
 
-- `apps/api/src/repositories/task.repository.ts` — findAllForUser
-- `apps/api/src/services/permission.service.ts` — assertMemberOfWorkspaceForTask
-- `apps/api/src/services/task.service.ts` — getAll/getById scoped
-- `apps/api/src/routes/task.routes.ts` — GET truyền userId
-- `apps/api/prisma/seed.ts` — Workspace A + B test data
+- `packages/shared/src/schemas/task.ts` — update omit boardId
+- `apps/api/src/services/task.service.ts` — shared types
+- `apps/api/src/services/permission.service.ts` — Role enum
+- `apps/api/src/repositories/task.repository.ts` — removed findAll
+- `apps/api/src/config/env.ts` — no SEED_USER_ID
+- `apps/api/.env` — DATABASE_URL, PORT, JWT_SECRET (local, không commit secret prod)
 
-## Next Step (Việc 4)
+## Next Step
 
-Scope `POST /tasks` create theo boardId:
+1. Optional: curl C-PATCH (400/200)
+2. Mentor giải thích **closure table** (org tree) → học viên thiết kế schema / migration
+3. Không nhảy ABAC/audit trước khi org tree có skeleton
 
-1. Mentor giải thích approach (repo board→workspace + membership assert)
-2. Học viên gõ code
-3. Test: member POST task với BOARD_B (outsider workspace) → phải fail
+## Mentor Rules
 
-## Startup for Next Agent
-
-1. Read `AGENTS.md` (mentor role, xưng tao/mày)
-2. Read `.harness/CONTEXT.md` mục ⏸️ + `feature_list.json` + `progress.md`
-3. `./.harness/init.sh`
-4. Continue Việc 4
+- Xưng tao/mày; học viên tự gõ code/lệnh
+- Không ask_question nút bấm
+- Pattern assert: 404 cross-tenant / 403 in-tenant; check trước side-effect
