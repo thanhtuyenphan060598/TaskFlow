@@ -1,7 +1,8 @@
 import { buildApp } from "./app.js";
 import { env } from "./config/env.js";
-const app = buildApp();
+
 const start = async () => {
+  const app = await buildApp();
   try {
     await app.listen({ port: env.PORT });
   } catch (error) {
@@ -9,4 +10,5 @@ const start = async () => {
     process.exit(1);
   }
 };
+
 start();

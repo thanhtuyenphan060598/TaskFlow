@@ -1,16 +1,16 @@
 import { prisma } from "../lib/prisma.js";
-import type { Prisma } from '../generated/prisma/client.js';
+import type { Prisma } from "../generated/prisma/client.js";
 
 export const userRepository = {
-    create(data: Prisma.UserCreateInput) {
-        return prisma.user.create({ data });
-    },
+  create(data: Prisma.UserCreateInput) {
+    return prisma.user.create({ data });
+  },
 
-    findByEmail(email: string) {
-        return prisma.user.findUnique({ where: { email } });
-    },
+  findByEmail(email: string) {
+    return prisma.user.findUnique({ where: { email } });
+  },
 
-    findById(id: string) {
-        return prisma.user.findUnique({ where: { id } });
-    }
-}
+  findById(id: string) {
+    return prisma.user.findUnique({ where: { id } });
+  },
+};

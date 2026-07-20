@@ -1,0 +1,191 @@
+{
+  "project": "TaskFlow → CompanyOS (Nova Agency)",
+  "note": "Source of truth cho tiến độ. status: done | in-progress | not-started. evidence: bằng chứng test/verify đã chạy thật. Xem CONTEXT.md cho chi tiết lý thuyết + bài học từng bước. Roadmap tổng ở CONTEXT.md mục 0-BIS.",
+  "current_focus": "feat-0.3-iam",
+  "features": [
+    {
+      "id": "feat-gd0",
+      "name": "GĐ0 Foundation & Monorepo",
+      "description": "Monorepo pnpm workspace (apps/ + packages/shared), Zod shared schema, tooling",
+      "dependencies": [],
+      "status": "done",
+      "evidence": "pnpm install OK 2 workspace; shared schema chạy qua tsx; symlink pnpm verified"
+    },
+    {
+      "id": "feat-gd1",
+      "name": "GĐ1 BE Core + Data Modeling + CRUD Task",
+      "description": "Prisma 7 + Postgres (Docker), 6 model + 3 enum, 2 migrations, CRUD API Task kiến trúc 3 lớp (route→service→repository), Zod validate, error handler tập trung, seed",
+      "dependencies": ["feat-gd0"],
+      "status": "done",
+      "evidence": "curl POST→201/GET→200/404/400 PASS; schema .strict() + status/priority/dueDate nullable test 4 case PASS"
+    },
+    {
+      "id": "feat-0.2-auth-basics",
+      "name": "GĐ2 Bài 1-3 Auth basics (AuthN/Z, bcrypt, register/login)",
+      "description": "Lý thuyết 401vs403; bcryptjs hash; register (409 trùng email, SafeUser ko lộ password); login (401 chống user enumeration)",
+      "dependencies": ["feat-gd1"],
+      "status": "done",
+      "evidence": "register→201/409, DB lưu $2b$ hash; login 4 case PASS (200/401 sai pass/401 ko tồn tại msg giống/400 thiếu field)"
+    },
+    {
+      "id": "feat-0.2-jwt",
+      "name": "GĐ2 Bài 4 JWT (access 15m + refresh 7d)",
+      "description": "@fastify/jwt, JWT_SECRET env validate, ký token ở route (CÁCH A), trả {accessToken, refreshToken}",
+      "dependencies": ["feat-0.2-auth-basics"],
+      "status": "done",
+      "evidence": "decode payload access exp-iat=900s(15m), refresh=604800s(7d) PASS"
+    },
+    {
+      "id": "feat-0.2-auth-hook",
+      "name": "GĐ2 Bài 5 Auth hook (protect routes)",
+      "description": "fastify-plugin decorate app.authenticate; jwtVerify; module augmentation types; addHook preHandler bảo vệ Task routes; encapsulation",
+      "dependencies": ["feat-0.2-jwt"],
+      "status": "done",
+      "evidence": "TEST 4/4 PASS: no-token→401, +Bearer→200, token rác→401, /login ko cần token vẫn gọi được"
+    },
+    {
+      "id": "feat-0.2-task-auth",
+      "name": "GĐ2 Bài 6 Áp auth vào Task (authorId từ token)",
+      "description": "task.service.create(data, authorId); route truyền request.user.userId; bỏ SEED_USER_ID env cứng; service sạch HTTP",
+      "dependencies": ["feat-0.2-auth-hook"],
+      "status": "done",
+      "evidence": "login→tạo task→authorId==userId trong token PASS"
+    },
+    {
+      "id": "feat-0.2-rbac",
+      "name": "GĐ2 Bài 7 RBAC (author-first + role qua Membership)",
+      "description": "assertCanModifyTask: author OR OWNER/ADMIN else 403; layered (permission.service gọi repo, ko chạm prisma); membership.repository; forbidden()=403; seed 3 role",
+      "dependencies": ["feat-0.2-task-auth"],
+      "status": "done",
+      "evidence": "TEST 4/4 PASS: MEMBER sửa task mình→200, MEMBER sửa task owner→403, OWNER→200, ADMIN→200"
+    },
+    {
+      "id": "feat-0.1a-ratelimit",
+      "name": "GĐ0.1 Rate-limit (Bài 8)",
+      "description": "@fastify/rate-limit global 100/phút + login/register 5/phút chống brute-force; fix error-handler xử lý 2 nguồn lỗi (AppError + Fastify statusCode 4xx)",
+      "dependencies": ["feat-0.2-rbac"],
+      "status": "done",
+      "evidence": "TEST PASS: login 5 lần→401, lần 6-7→429 (body 'Rate limit exceeded'); health spam 7 lần→200 (ko bị chặn)"
+    },
+    {
+      "id": "feat-0.1c",
+      "name": "GĐ0.1 Refresh token endpoint /auth/refresh",
+      "description": "V1 shared refreshTokenSchema (.strict); V2 POST /auth/refresh: app.jwt.verify(refreshToken) trong try/catch→fail 401→OK ký access mới 15m. Bản cơ bản (chưa rotation/revoke — nợ GĐ0.3)",
+      "dependencies": ["feat-0.1a-ratelimit"],
+      "status": "done",
+      "evidence": "TEST 6 case PASS: refresh thật→200+accessToken mới; token rác→401 'Invalid refresh token'; thiếu field→400 ValidationError; login/register→201/200. NỢ: case dùng access token cũng qua /refresh (cùng secret) — cần type:refresh/access, hoãn GĐ0.3. Bug đã fix: import '../lib/error.js'→'errors.js'"
+    },
+    {
+      "id": "feat-0.1d",
+      "name": "GĐ0.1 Nợ: validate :id bằng Zod ở params",
+      "description": "task.routes PATCH/DELETE/GET :id: thay 'as {id:string}' bằng taskIdParamSchema.parse (z.uuid, shared). Validate ở BIÊN → id rác trả 400 thay vì để xuống Prisma nổ 500",
+      "dependencies": ["feat-0.1c"],
+      "status": "done",
+      "evidence": "TEST 3 case PASS: GET id rác 'abc'→400 ValidationError; GET uuid hợp lệ không tồn tại→404 (qua validate, service báo not found); DELETE id rác→400. Phân biệt rõ 400 (client bậy) vs 404 (không thấy)"
+    },
+    {
+      "id": "feat-0.2-monorepo",
+      "name": "GĐ0.2 Chuẩn hóa monorepo đa-app",
+      "description": "Chốt ranh giới phụ thuộc (docs/ARCHITECTURE.md): apps→packages, shared=đáy no-framework, ui web-only, api-client web+mobile. Root scripts (dev/build/typecheck -r). Cài typescript+@types/node ở ROOT (-Dw) dùng chung. tsconfig cho shared. Turbo hoãn tới GĐ1 app (không over-engineer)",
+      "dependencies": ["feat-0.1d"],
+      "status": "done",
+      "evidence": "pnpm typecheck (pnpm -r exec tsc --noEmit) exit 0: api+shared PASS. pnpm build exit 0. ./.harness/init.sh exit 0 restartable. docs/ARCHITECTURE.md chốt dependency direction. TP2 EXPLICIT: mỗi workspace tự khai typescript (root SẠCH chỉ prettier+tsx; api có ts+@types/node vì dùng Node API; shared có ts KHÔNG @types/node vì Zod thuần) — hợp dockerize từng app GĐ9. shared có tsconfig riêng"
+    },
+    {
+      "id": "feat-0.3-iam",
+      "name": "GĐ0.3 IAM + Org Structure",
+      "description": "Multi-tenancy, org tree (closure table), RBAC→ABAC, audit log nền. Mảng 1a READ (getAll/getById tenant isolation) DONE + test PASS. Mảng 1b WRITE (create boardId scope) DONE + test PASS. Mảng 2/3/4 chưa làm.",
+      "dependencies": ["feat-0.2-monorepo"],
+      "status": "in-progress",
+      "evidence": "MẢNG 1a READ DONE 2026-07-20: C1-C4 isolation PASS (findAllForUser, assertMemberOfWorkspaceForTask 404 cross-tenant, getAll/getById scoped). MẢNG 1b WRITE DONE 2026-07-20: bịt lỗ hổng IDOR create cross-tenant. Code học viên gõ: board.repository.ts findWorkspaceIdByBoardId (tách file riêng đúng SRP, KHÔNG nợ kỹ thuật); permission.assertMemberOfWorkspaceForBoard (404 giấu, message giống nhau cho case board-not-exist vs cross-tenant chống info-disclosure); task.service.create → async + assert TRƯỚC create (fail-fast, ko ghi DB rồi mới check). Verify: tsc --noEmit EXIT 0. TEST curl 3/3 PASS: C-CREATE-1 member POST BOARD_B(cross-tenant)→404; C-CREATE-2 member POST BOARD_A(hợp lệ)→201; C-CREATE-3 board UUID random→404. NEXT: khép Mảng 1 → Mảng 2 org tree / Mảng 3 ABAC / Mảng 4 audit log. Chi tiết .harness/progress.md"
+    },
+    {
+      "id": "feat-0.4-design-system",
+      "name": "GĐ0.4 Design System nền",
+      "description": "packages/ui (Button/Table/Modal/Form), Storybook, theme, layout, auth-guard FE",
+      "dependencies": ["feat-0.3-iam"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "feat-app1-task",
+      "name": "GĐ1(app) Project & Task (hoàn thiện + FE)",
+      "description": "FE Next.js board/task, React Query, RHF+Zod, Tailwind, drag-drop, realtime board (WebSocket presence), offline (Zustand+IndexedDB), search/filter/pagination",
+      "dependencies": ["feat-0.4-design-system"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "feat-app2-time",
+      "name": "GĐ2(app) Time Tracking",
+      "description": "Time-series, SQL aggregation, báo cáo tuần/tháng, chart, timer realtime",
+      "dependencies": ["feat-app1-task"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "feat-app3-crm",
+      "name": "GĐ3(app) CRM",
+      "description": "Khách hàng/liên hệ, deal pipeline (state machine, kanban), search/filter nâng cao",
+      "dependencies": ["feat-app2-time"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "feat-app4-invoicing",
+      "name": "GĐ4(app) Invoicing",
+      "description": "Báo giá→hóa đơn từ giờ log (cross-app), PDF export, số tự tăng + thuế (decimal), file S3/MinIO",
+      "dependencies": ["feat-app3-crm"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "feat-app5-hrm",
+      "name": "GĐ5(app) HRM + Leave",
+      "description": "Hồ sơ nhân viên/hợp đồng (file upload), xin nghỉ duyệt nhiều cấp (workflow/approval engine), calendar",
+      "dependencies": ["feat-app4-invoicing"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "feat-app6-notif-chat",
+      "name": "GĐ6(app) Notification + Chat (nền async)",
+      "description": "Event Bus (Redis Pub/Sub→Kafka), queue (BullMQ), chat realtime (WebSocket rooms/presence), email/push tập trung",
+      "dependencies": ["feat-app5-hrm"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "feat-app7-analytics",
+      "name": "GĐ7(app) Analytics Dashboard",
+      "description": "Gom data 6 app (materialized view), Redis cache + invalidation, biểu đồ BI",
+      "dependencies": ["feat-app6-notif-chat"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "feat-gd8-testing",
+      "name": "GĐ8 Testing",
+      "description": "Unit + integration + e2e (Jest, Supertest, Playwright), CI GitHub Actions",
+      "dependencies": ["feat-app7-analytics"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "feat-gd9-deploy",
+      "name": "GĐ9 Deploy & DevOps",
+      "description": "Dockerize, Nginx, VPS, Cloudflare, CI/CD; (optional) K8s, Prometheus/Grafana",
+      "dependencies": ["feat-gd8-testing"],
+      "status": "not-started",
+      "evidence": ""
+    },
+    {
+      "id": "feat-gd10-mobile",
+      "name": "GĐ10 Mobile App",
+      "description": "React Native/Expo, tái dùng packages/shared+api-client, SecureStore+biometric, push FCM/APNs+deep link, offline SQLite sync, camera upload",
+      "dependencies": ["feat-gd9-deploy"],
+      "status": "not-started",
+      "evidence": ""
+    }
+  ]
+}
