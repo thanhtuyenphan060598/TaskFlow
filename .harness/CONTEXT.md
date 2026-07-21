@@ -22,40 +22,47 @@ Học viên chạy mentor qua `cline` TRONG TERMINAL của Cursor (KHÔNG phải
 (2) Nén context thì bảo học viên MỞ SESSION MỚI (đọc CONTEXT.md), đừng bấm Compact UI.
 (3) Không cần xóa cache/reinstall. Muốn dùng nút bấm/compact mượt thì học viên tự chuyển sang Chat panel IDE.
 
-## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi 2026-07-20 tối)
+## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi 2026-07-21)
 
-**Vừa xong (session tối):** Review cứng Mảng 1 + **bịt lỗ PATCH `boardId`** + bỏ hardcode enum/type. `tsc --noEmit` EXIT 0. Curl C-PATCH (boardId→400 / title→200) **chưa chạy xong** — buổi sau verify nhanh rồi sang Mảng 2.
+**Source of truth trạng thái:** `.harness/feature_list.json` (`current_focus` = `feat-0.3-iam`). File này = nhật ký học; `progress.md` = log session; `session-handoff.md` = bàn giao agent.
+
+**Vừa xong buổi này:** Drill **SQL thuần** trên `psql` (học viên FE→BE, đọc SQL ~10% đầu buổi). Bài 1–3 PASS. **Dừng trước Bài 4** (chuỗi Task→Board→Project→Workspace = `findAllForUser`).
 
 **ĐANG LÀM: GĐ0.3 IAM — feat-0.3-iam (in-progress).**
+- Code Mảng 1 Multi-tenancy Task: **KHÉP** (commit `2e19c66`).
+- Học SQL: **Bài 4 tiếp theo** → xong drill thì mới Mảng 2 org tree.
 
-### Mảng 1 Multi-tenancy Task — coi như KHÉP (code), thiếu curl PATCH optional
+### SQL drill (2026-07-21 — psql, Docker Postgres)
 
-- ✅ **1a READ** — getAll/getById tenant-scoped. TEST curl 5/5 PASS (sáng 2026-07-20).
-- ✅ **1b WRITE create** — `assertMemberOfWorkspaceForBoard` trước create. TEST curl 3/3 PASS.
-- ✅ **1c harden (tối 2026-07-20) — học viên tự gõ:**
-  1. **Lỗ PATCH `boardId` (IDOR move cross-tenant):** `updateTaskSchema = createTaskSchema.partial()` từng cho phép gửi `boardId` → assert chỉ check task CŨ, Prisma update FK board đích không assert. Fix: `createTaskSchema.omit({ boardId: true }).partial().strict()` — PATCH kèm `boardId` → 400. Move board = feature riêng sau.
-  2. **Hardcode:** `task.service` dùng `CreateTaskSchema` / `UpdateTaskSchema` từ `@taskflow/shared` (bỏ union status/priority tự viết). `permission` dùng `Role` enum Prisma + `canModifyRoles` (OWNER/ADMIN).
-  3. Xóa `taskRepository.findAll()` (footgun list all-tenant).
-  4. `env.ts`: bỏ `SEED_USER_ID` khỏi schema (không còn dùng). `.env` cần `DATABASE_URL` + `JWT_SECRET` (≥16); `PORT` optional default 3001.
+| Bài | Nội dung | Trạng thái |
+|-----|----------|------------|
+| 1 | SELECT / FROM / WHERE / COUNT; `"User"`; chuỗi `'...'`; `;` kết thúc câu; pager `q` | ✅ PASS |
+| 2 | JOIN User↔Membership; `"userId"` camelCase; alias; ambiguous `id` | ✅ PASS |
+| 3 | EXISTS correlate workspace ↔ membership ↔ user email | ✅ PASS (`Seed Workspace` 1 row) |
+| 4 | Task→Board→Project→Workspace→Membership — title task member thấy | ⬜ **BUỔI SAU** |
 
-**Bài học session tối (giữ):**
+**Cách học (học viên chốt — BẮT BUỘC):** mentor chỉ gợi ý / hỏi / review. **Cấm** đưa code/SQL mẫu đầy đủ để chép. Học viên tự sửa lỗi trên psql. Lộ trình: SQL thuần → sau đó Prisma↔SQL song song.
 
-- Assert quyền ≠ validate mọi field body. `assertCanModifyTask` không nhìn `boardId` trong PATCH → lỗ “move sang board tenant khác”.
-- `.partial()` trên create schema = copy mù nghiệp vụ create→update; omit field không thuộc update.
-- `process.env` = túi process (OS/shell + dotenv merge). Zod validate `process.env` sau merge, **không** đọc file `.env` trực tiếp. dotenv mặc định không đè key đã có (kể cả `""`). Máy học viên: OS không có JWT/DB/PORT → app lấy từ `apps/api/.env`.
+**Lỗi syntax hay gặp (buổi này):** thiếu `;` → prompt `-#`; `"User"` vs `user`; `'email'` vs `"email"`; `"userId"` quote; JOIN sai khóa → 0 rows im lặng; EXISTS không correlate → lọc sai.
 
-- ⬜ **Mảng 2:** org tree (closure table). ⬜ Mảng 3 RBAC→ABAC. ⬜ Mảng 4 audit log.
+### Mảng 1 Multi-tenancy Task — KHÉP (code); C-PATCH optional
 
-**Đã khép trước đó:** GĐ0 Foundation, GĐ1 CRUD Task, GĐ2 Auth (Bài 1-7), GĐ0.1 Security, GĐ0.2 Monorepo, Mảng 1a/1b.
+- ✅ **1a READ** — TEST curl 5/5 PASS (2026-07-20).
+- ✅ **1b WRITE create** — TEST curl 3/3 PASS.
+- ✅ **1c harden** — commit `2e19c66`; tsc OK. Curl C-PATCH **optional, chưa evidence**.
+
+- ⬜ **Mảng 2:** org tree (closure table) — **sau khi xong SQL Bài 4+**. ⬜ Mảng 3 ABAC. ⬜ Mảng 4 audit.
 
 **BÀI TIẾP THEO cho agent/mentor mới:**
 
-1. (Optional 5 phút) Curl C-PATCH: PATCH +`boardId`→400; PATCH chỉ `title`→200. Seed: `cd apps/api && pnpm exec tsx prisma/seed.ts`.
-2. **Mảng 2 org tree** — mentor giải thích closure table trước, học viên gõ (chưa bắt đầu code).
+1. `./.harness/init.sh` + `docker exec -it taskflow-postgres psql -U taskflow -d taskflow`
+2. **SQL Bài 4** — 1 câu: `title` mọi task `member@taskflow.dev` được thấy (JOIN hoặc EXISTS, tự chọn). Kỳ vọng ~2 task Seed Workspace, không có task outsider.
+3. Sau Bài 4 PASS → (optional) so sánh với `findAllForUser` trong `task.repository.ts` → rồi Mảng 2 org tree.
+4. (Optional) Curl C-PATCH.
 
-**Cách mentor (BẮT BUỘC giữ):** mentor CHỈ hướng dẫn + giải thích + review; HỌC VIÊN tự gõ mọi code/lệnh.
-Tài liệu (file này) mentor viết hộ. Code tiếng Anh. Đi từng bước nhỏ. Checkpoint câu hỏi mỗi bài.
-KHÔNG tự ý sửa file của học viên khi chưa giải thích & học viên chưa đồng ý.
+**Cách mentor (BẮT BUỘC giữ):** mentor CHỈ hướng dẫn + giải thích + review; HỌC VIÊN tự gõ mọi code/lệnh/SQL.
+Tài liệu mentor viết hộ. Code tiếng Anh. Một việc một lúc — nói rõ “tao cần gì” trước khi hỏi thêm.
+KHÔNG tự ý sửa file code học viên khi chưa giải thích & học viên chưa đồng ý.
 
 ---
 
@@ -110,13 +117,14 @@ LIÊN THÔNG "hệ sinh thái" (ví dụ dòng chảy xuyên app): Sales chốt 
 - ✅ **Mảng 1c harden** — omit `boardId` trên update; shared types; Role enum; xóa findAll. tsc EXIT 0; curl C-PATCH optional chưa chạy (2026-07-20 tối).
 - ⬜ Mảng 2 org tree (closure table). Mảng 3 RBAC→ABAC. Mảng 4 audit log.
 
-ĐIỂM ĐANG ĐỨNG: GĐ0.3 IAM — Mảng 1 Task (READ+WRITE+harden) xong về code; next = Mảng 2 org tree.
+ĐIỂM ĐANG ĐỨNG (đồng bộ 2026-07-21): GĐ0.3 IAM — Mảng 1 Task (READ+WRITE+harden) xong + commit `2e19c66`; next = Mảng 2 org tree. (Mục 5 bảng 10 GĐ bên dưới = roadmap CŨ — tham khảo; CHÍNH = 0-BIS.)
 (Mục 5 "Lộ Trình 10 Giai Đoạn" bên dưới là roadmap CŨ — GIỮ LÀM THAM KHẢO, roadmap CHÍNH = mục 0-BIS.)
 
 ## 1. Profile Học Viên
 
-- FE: React/Next.js (2-4 năm). Target: Fullstack Dev (JS/TS).
+- FE: React/Next.js (2-4 năm). Target: Fullstack Dev (JS/TS). Migration FE→BE; **SQL gần như zero** (tự đánh giá đọc SQL ~10%, 2026-07-21).
 - Điểm mạnh: JS/TS, tư duy component, async, HTTP. Tư duy phản biện tốt (hay hỏi "tại sao").
+- **Cách học BẮT BUỘC (học viên chốt 2026-07-21):** mentor CHỈ gợi ý / hỏi / review. **CẤM** đưa code mẫu đầy đủ để chép theo (kể cả SQL). Học viên tự động não + tự gõ. Đưa sample hoàn chỉnh = mentor học hộ, học viên không đúc kết được. Lộ trình query: **SQL thuần trước → rồi mới Prisma↔SQL song song**. Drill trước Mảng 2 org tree.
 
 ## 2. Domain: "TaskFlow" — Team Task & Project Management (kiểu Trello/Linear thu nhỏ)
 
@@ -149,7 +157,7 @@ Mỗi GĐ: Lý thuyết & kiến trúc → Code (học viên tự làm) → Chec
 | --- | ----------------------- | ------------------------------------------------ | ------------------------------------------------------------------------ |
 | 0   | Foundation & Monorepo   | Repo + tooling + shared package                  | ✅ DONE                                                                  |
 | 1   | BE Core + Data Modeling | Data model + Prisma + Postgres + CRUD API        | ✅ DONE (DATA + CRUD API Task 3 lớp chạy & test OK. Chi tiết mục 7)      |
-| 2   | Auth & Security         | Register/login, JWT+refresh, RBAC, rate-limit    | 👉 TIẾP THEO (bắt đầu buổi sau — xem mục ⏸️ ĐIỂM DỪNG HIỆN TẠI đầu file) |
+| 2   | Auth & Security         | Register/login, JWT+refresh, RBAC, rate-limit    | ✅ DONE (Bài 1–7 + GĐ0.1). Roadmap CHÍNH = mục 0-BIS; đang GĐ0.3 IAM Mảng 2 |
 | 3   | FE Core                 | Next.js UI, React Query, RHF+Zod, Tailwind       | chưa                                                                     |
 | 4   | FE State & Offline      | Zustand, IndexedDB, optimistic update            | chưa                                                                     |
 | 5   | Realtime                | WebSocket, presence, live board                  | chưa                                                                     |
@@ -192,6 +200,8 @@ Lệnh hay dùng:
 ---
 
 ## 7. GIAI ĐOẠN 1 — TIẾN ĐỘ
+
+> ⚠️ **SNAPSHOT LỊCH SỬ GĐ1** (giữ để ôn). Trạng thái HIỆN TẠI xem mục ⏸️ đầu file + `feature_list.json`. Nhiều chi tiết dưới đây đã supersede (vd: `SEED_USER_ID` đã bỏ; `updateTaskSchema` giờ omit `boardId`; authorId lấy từ JWT).
 
 ### 7a. Phần DATA — ✅ ĐÃ XONG
 

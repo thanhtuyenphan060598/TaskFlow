@@ -94,10 +94,10 @@
     {
       "id": "feat-0.3-iam",
       "name": "GĐ0.3 IAM + Org Structure",
-      "description": "Multi-tenancy, org tree (closure table), RBAC→ABAC, audit log nền. Mảng 1a/1b DONE + test PASS. Harden PATCH omit boardId + shared types + Role enum DONE (tsc OK; curl C-PATCH optional chưa chạy). Mảng 2/3/4 chưa làm.",
+      "description": "Multi-tenancy Mảng 1a/1b/1c DONE. SQL drill Bài 1–3 PASS (psql 2026-07-21); Bài 4 + Mảng 2/3/4 chưa làm.",
       "dependencies": ["feat-0.2-monorepo"],
       "status": "in-progress",
-      "evidence": "MẢNG 1a READ 2026-07-20: C1-C4 PASS. MẢNG 1b WRITE create: C-CREATE-1/2/3 PASS + board.repository + assertMemberOfWorkspaceForBoard + create assert trước side-effect. HARDEN tối 2026-07-20: updateTaskSchema=createTaskSchema.omit({boardId:true}).partial().strict() (bịt IDOR PATCH move board cross-tenant); task.service dùng CreateTaskSchema/UpdateTaskSchema; permission dùng Role enum; xóa findAll(); env bỏ SEED_USER_ID. tsc EXIT 0. Curl C-PATCH (boardId→400, title→200) CHƯA evidence. NEXT: optional C-PATCH rồi Mảng 2 org tree (closure table). Chi tiết .harness/progress.md + CONTEXT mục ⏸️"
+      "evidence": "MẢNG 1 code: READ/WRITE create/harden commit 2e19c66. SQL DRILL 2026-07-21: Bài1 SELECT/WHERE/COUNT PASS; Bài2 JOIN User-Membership PASS; Bài3 EXISTS correlate member→Seed Workspace PASS. NEXT: SQL Bài4 (Task chain = findAllForUser) rồi Mảng2 org tree. C-PATCH curl optional chưa evidence. Học: mentor gợi ý only, cấm chép sample. Chi tiết CONTEXT mục ⏸️ + session-handoff.md"
     },
     {
       "id": "feat-0.4-design-system",
