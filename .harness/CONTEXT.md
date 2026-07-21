@@ -22,28 +22,31 @@ Học viên chạy mentor qua `cline` TRONG TERMINAL của Cursor (KHÔNG phải
 (2) Nén context thì bảo học viên MỞ SESSION MỚI (đọc CONTEXT.md), đừng bấm Compact UI.
 (3) Không cần xóa cache/reinstall. Muốn dùng nút bấm/compact mượt thì học viên tự chuyển sang Chat panel IDE.
 
-## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi 2026-07-21)
+## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi 2026-07-21 tối)
 
 **Source of truth trạng thái:** `.harness/feature_list.json` (`current_focus` = `feat-0.3-iam`). File này = nhật ký học; `progress.md` = log session; `session-handoff.md` = bàn giao agent.
 
-**Vừa xong buổi này:** Drill **SQL thuần** trên `psql` (học viên FE→BE, đọc SQL ~10% đầu buổi). Bài 1–3 PASS. **Dừng trước Bài 4** (chuỗi Task→Board→Project→Workspace = `findAllForUser`).
+**Vừa xong buổi này:** SQL **Bài 4 PASS** (2 rows: `Member's task`, `Owner's task`). So sánh ↔ `findAllForUser` + hiểu `some`/`every`. **Mảng 2 org tree** — lý thuyết closure table + checkpoint PASS. **Chưa code schema.**
 
 **ĐANG LÀM: GĐ0.3 IAM — feat-0.3-iam (in-progress).**
 - Code Mảng 1 Multi-tenancy Task: **KHÉP** (commit `2e19c66`).
-- Học SQL: **Bài 4 tiếp theo** → xong drill thì mới Mảng 2 org tree.
+- SQL drill Bài 1–4: **KHÉP**.
+- **Mảng 2:** đang lý thuyết closure table → **bước tiếp: thiết kế `OrgUnit` + closure trong `schema.prisma` (học viên tự gõ).**
 
-### SQL drill (2026-07-21 — psql, Docker Postgres)
+### SQL drill (2026-07-21 — psql, Docker Postgres) — ✅ KHÉP
 
 | Bài | Nội dung | Trạng thái |
 |-----|----------|------------|
 | 1 | SELECT / FROM / WHERE / COUNT; `"User"`; chuỗi `'...'`; `;` kết thúc câu; pager `q` | ✅ PASS |
 | 2 | JOIN User↔Membership; `"userId"` camelCase; alias; ambiguous `id` | ✅ PASS |
 | 3 | EXISTS correlate workspace ↔ membership ↔ user email | ✅ PASS (`Seed Workspace` 1 row) |
-| 4 | Task→Board→Project→Workspace→Membership — title task member thấy | ⬜ **BUỔI SAU** |
+| 4 | Task→Board→Project→Workspace→Membership — title task member thấy | ✅ PASS (2 rows; lỗi đã sửa: JOIN Membership sai khóa; thiếu WHERE email) |
+
+**Bài 4 evidence:** JOIN chain đúng `m."workspaceId" = w.id`; `WHERE u.email = 'member@taskflow.dev'` → `Member's task`, `Owner's task`. Map Prisma `findAllForUser`: nested `board→project→workspace→memberships.some { userId }` ≈ JOIN chain + filter user.
 
 **Cách học (học viên chốt — BẮT BUỘC):** mentor chỉ gợi ý / hỏi / review. **Cấm** đưa code/SQL mẫu đầy đủ để chép. Học viên tự sửa lỗi trên psql. Lộ trình: SQL thuần → sau đó Prisma↔SQL song song.
 
-**Lỗi syntax hay gặp (buổi này):** thiếu `;` → prompt `-#`; `"User"` vs `user`; `'email'` vs `"email"`; `"userId"` quote; JOIN sai khóa → 0 rows im lặng; EXISTS không correlate → lọc sai.
+**Lỗi syntax hay gặp (SQL drill):** thiếu `;` → prompt `-#`; `"User"` vs `user`; `'email'` vs `"email"`; `"userId"` quote; JOIN sai khóa → 0 rows im lặng; thiếu WHERE user → Outsider + nhân hàng theo membership.
 
 ### Mảng 1 Multi-tenancy Task — KHÉP (code); C-PATCH optional
 
@@ -51,18 +54,52 @@ Học viên chạy mentor qua `cline` TRONG TERMINAL của Cursor (KHÔNG phải
 - ✅ **1b WRITE create** — TEST curl 3/3 PASS.
 - ✅ **1c harden** — commit `2e19c66`; tsc OK. Curl C-PATCH **optional, chưa evidence**.
 
-- ⬜ **Mảng 2:** org tree (closure table) — **sau khi xong SQL Bài 4+**. ⬜ Mảng 3 ABAC. ⬜ Mảng 4 audit.
+### Mảng 2 org tree (closure table) — ĐANG LÀM (lý thuyết xong, chưa code)
+
+**Mục tiêu:** trong workspace, cây tổ chức công ty → phòng → team → nhân viên. Dùng **closure table** (không chỉ `parentId`) vì query “mọi descendant của node X” hay dùng trong IAM.
+
+**3 cột closure (học viên đã hiểu — checkpoint PASS):**
+
+| Cột | Nghĩa |
+|-----|--------|
+| `ancestor` | node tổ tiên (điểm bắt đầu trên nhánh, có thể = chính nó) |
+| `descendant` | node hậu duệ (ở dưới, có thể = chính nó) |
+| `depth` | số cấp từ ancestor xuống descendant (0 = cùng node) |
+
+Ví dụ cây: Nova → Dev → Backend Team; Nova → HR. Không có hàng `hr → be` (ngang hàng). Hàng `nova → be → depth 2` = từ Nova xuống Backend qua 2 cấp (Nova→Dev→Backend).
+
+**Tradeoff:** ghi nặng hơn (thêm node = thêm nhiều hàng closure), đọc nhẹ (1 query descendants, không recursive).
+
+**Bước Mảng 2 (thứ tự):**
+1. ✅ Lý thuyết + checkpoint closure
+2. ⬜ Học viên thiết kế model `OrgUnit` + bảng closure trong `schema.prisma`
+3. ⬜ Migration + seed org tree mẫu (Seed Workspace)
+4. ⬜ SQL query descendants
+5. ⬜ Repository / API (optional)
+
+- ⬜ **Mảng 3** ABAC. ⬜ **Mảng 4** audit.
 
 **BÀI TIẾP THEO cho agent/mentor mới:**
 
-1. `./.harness/init.sh` + `docker exec -it taskflow-postgres psql -U taskflow -d taskflow`
-2. **SQL Bài 4** — 1 câu: `title` mọi task `member@taskflow.dev` được thấy (JOIN hoặc EXISTS, tự chọn). Kỳ vọng ~2 task Seed Workspace, không có task outsider.
-3. Sau Bài 4 PASS → (optional) so sánh với `findAllForUser` trong `task.repository.ts` → rồi Mảng 2 org tree.
-4. (Optional) Curl C-PATCH.
+1. `./.harness/init.sh`
+2. **Mảng 2 bước 2:** học viên phác `OrgUnit` + closure table — mentor review, không viết hộ.
+3. (Optional) Curl C-PATCH.
 
 **Cách mentor (BẮT BUỘC giữ):** mentor CHỈ hướng dẫn + giải thích + review; HỌC VIÊN tự gõ mọi code/lệnh/SQL.
 Tài liệu mentor viết hộ. Code tiếng Anh. Một việc một lúc — nói rõ “tao cần gì” trước khi hỏi thêm.
 KHÔNG tự ý sửa file code học viên khi chưa giải thích & học viên chưa đồng ý.
+
+### 📖 QUY TẮC MENTOR: BÀI MỚI = GIẢI THÍCH TRƯỚC, HỎI SAU (học viên chốt 2026-07-21 tối)
+
+Khi **mở chủ đề/bài mới** (vd. closure table, org tree, ABAC…):
+
+1. **Giải thích đủ trước** — khái niệm, ví dụ cụ thể, bảng minh họa, query mẫu ý tưởng (không phải code chép), tradeoff. Học viên FE→BE, SQL ~10%: **không được** nhảy thẳng checkpoint khi chưa có nền.
+2. **Sau đó mới CHECKPOINT** — 1–2 câu hỏi ngắn xác nhận hiểu.
+3. **Rồi mới bước làm** (schema, migration, curl…).
+
+**Cấm:** giải thích sơ sài 3 dòng → hỏi luôn → học viên “không hiểu gì cả”. Nếu học viên báo chưa hiểu → giải thích lại **chi tiết hơn**, không đổ lỗi “mày đọc kỹ đi”.
+
+**Prisma `some` / `every` (buổi này — đã chốt):** filter trên list quan hệ con; không chết query; parent không thỏa → bỏ parent đó khỏi kết quả. IAM membership + `userId` → dùng **`some`** (“user có trong workspace”), không dùng **`every`** (“cả workspace chỉ toàn user đó”).
 
 ---
 
@@ -117,7 +154,7 @@ LIÊN THÔNG "hệ sinh thái" (ví dụ dòng chảy xuyên app): Sales chốt 
 - ✅ **Mảng 1c harden** — omit `boardId` trên update; shared types; Role enum; xóa findAll. tsc EXIT 0; curl C-PATCH optional chưa chạy (2026-07-20 tối).
 - ⬜ Mảng 2 org tree (closure table). Mảng 3 RBAC→ABAC. Mảng 4 audit log.
 
-ĐIỂM ĐANG ĐỨNG (đồng bộ 2026-07-21): GĐ0.3 IAM — Mảng 1 Task (READ+WRITE+harden) xong + commit `2e19c66`; next = Mảng 2 org tree. (Mục 5 bảng 10 GĐ bên dưới = roadmap CŨ — tham khảo; CHÍNH = 0-BIS.)
+ĐIỂM ĐANG ĐỨNG (đồng bộ 2026-07-21 tối): GĐ0.3 IAM — SQL Bài 1–4 PASS; Mảng 1 code KHÉP; Mảng 2 closure table lý thuyết xong → next = học viên thiết kế schema OrgUnit. (Mục 5 bảng 10 GĐ bên dưới = roadmap CŨ — tham khảo; CHÍNH = 0-BIS.)
 (Mục 5 "Lộ Trình 10 Giai Đoạn" bên dưới là roadmap CŨ — GIỮ LÀM THAM KHẢO, roadmap CHÍNH = mục 0-BIS.)
 
 ## 1. Profile Học Viên

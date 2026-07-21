@@ -2,22 +2,25 @@
 
 ## Current State
 
-**Last Updated:** 2026-07-21 (chiều — end session)
-**Active Feature:** `feat-0.3-iam` — Mảng 1 code **KHÉP**; **SQL drill** Bài 1–3 PASS; **next = Bài 4**.
+**Last Updated:** 2026-07-21 (tối)
+**Active Feature:** `feat-0.3-iam` — SQL drill **KHÉP**; **Mảng 2 org tree** lý thuyết xong, chưa code schema.
 **GĐ0.1 Security + GĐ0.2 Monorepo:** ĐÃ KHÉP.
 
 ## ⏸️ ĐIỂM DỪNG — bàn giao buổi sau
 
-### Session 2026-07-21 — SQL drill (psql)
+### Session 2026-07-21 (tối) — SQL Bài 4 + Mảng 2 lý thuyết
 
-- [x] Checkpoint: đọc SQL ~10%; FE→BE chưa đụng SQL; học SQL thuần trước Prisma
-- [x] Quy tắc: mentor gợi ý only — **không code/SQL mẫu chép**
-- [x] Bài 1 PASS — SELECT, WHERE, COUNT; `'...'` vs `"..."`; `"User"`
-- [x] Bài 2 PASS — JOIN; `"userId"`; alias; ambiguous id
-- [x] Bài 3 PASS — EXISTS correlate → `Seed Workspace` (1 row)
-- [ ] **Bài 4** — Task→Board→Project→Workspace→Membership → title tasks member thấy
+- [x] SQL Bài 4 PASS — 2 rows (`Member's task`, `Owner's task`); sửa JOIN Membership + WHERE email
+- [x] Map SQL ↔ `findAllForUser`; hiểu `some` vs `every`
+- [x] Mảng 2: closure table — ancestor/descendant/depth; checkpoint PASS
+- [x] Chốt quy tắc mentor: **bài mới = giải thích đủ trước, checkpoint sau** (ghi CONTEXT.md)
+- [ ] Mảng 2 bước 2: học viên thiết kế `OrgUnit` + closure trong `schema.prisma`
 
-### Code IAM (trước buổi này — không sửa thêm)
+### Session 2026-07-21 (chiều) — SQL drill Bài 1–3
+
+- [x] Bài 1–3 PASS (xem CONTEXT.md)
+
+### Code IAM
 
 - Mảng 1a/1b/1c PASS; HEAD `2e19c66`
 - Curl C-PATCH optional — chưa evidence
@@ -28,17 +31,18 @@
 
 - [x] GĐ0, GĐ1, GĐ2 Auth, GĐ0.1, GĐ0.2
 - [x] feat-0.3-iam Mảng 1 (READ+WRITE+harden)
-- [x] SQL Bài 1–3
+- [x] SQL Bài 1–4
+- [x] Mảng 2 lý thuyết closure table
 
 ### What's Next (thứ tự)
 
-1. **SQL Bài 4** (buổi sau mở đầu)
-2. So sánh Bài 4 ↔ `task.repository.findAllForUser`
-3. Mảng 2 org tree (closure table)
+1. **Mảng 2:** học viên phác Prisma model `OrgUnit` + closure table → mentor review
+2. Migration + seed org tree
+3. SQL query descendants
 4. (Optional) Curl C-PATCH
 
 ## Notes for Next Session
 
-1. `AGENTS.md` + `CONTEXT.md` mục ⏸️ + `session-handoff.md`
-2. `./.harness/init.sh` + psql vào Docker Postgres
-3. Một việc một lúc — Bài 4 trước, đừng nhảy Mảng 2
+1. Đọc CONTEXT.md mục ⏸️ + quy tắc “giải thích trước khi hỏi”
+2. `./.harness/init.sh`
+3. Một việc một lúc — schema trước, đừng nhảy seed/API

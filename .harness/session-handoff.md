@@ -1,48 +1,42 @@
 # Session Handoff
 
-> Cập nhật cuối buổi: **2026-07-21** (chiều) — dừng trước SQL Bài 4.
+> Cập nhật cuối buổi: **2026-07-21** (tối) — SQL Bài 4 PASS; Mảng 2 lý thuyết closure xong.
 
 ## Current Objective
 
-- Goal: `feat-0.3-iam` — code Mảng 1 **xong**; đang **drill SQL** trước Mảng 2 org tree.
-- **Buổi sau mở:** SQL **Bài 4** — `title` task mà `member@taskflow.dev` thấy (chuỗi Task→Board→Project→Workspace→Membership).
-- Mảng 2 org tree: **sau** khi xong Bài 4 (và nên so sánh với `findAllForUser`).
+- Goal: `feat-0.3-iam` — Mảng 1 code **xong**; SQL drill **xong**; **Mảng 2 org tree** đang lý thuyết → code schema.
+- **Buổi sau mở:** học viên thiết kế `OrgUnit` + closure table trong `schema.prisma` (mentor review, không viết hộ).
 
-## Completed This Session (2026-07-21)
+## Completed This Session (2026-07-21 tối)
 
-- [x] Harness sync + `./.harness/init.sh` PASS
-- [x] Chốt cách học: mentor gợi ý only — **cấm SQL/code mẫu chép**
-- [x] SQL Bài 1: SELECT / WHERE / COUNT — PASS
-- [x] SQL Bài 2: JOIN User↔Membership — PASS
-- [x] SQL Bài 3: EXISTS correlate workspace+member — PASS (`Seed Workspace`)
+- [x] SQL Bài 4 PASS — `Member's task`, `Owner's task` (2 rows)
+- [x] So sánh SQL ↔ `findAllForUser`; `some`/`every` IAM
+- [x] Closure table: ancestor, descendant, depth — checkpoint PASS
+- [x] Quy tắc mentor mới: bài mới = giải thích đủ trước, hỏi sau (CONTEXT.md)
 
 ## Not Done (buổi sau)
 
-- [ ] SQL Bài 4 — multi-join / EXISTS trên cây Task
+- [ ] Prisma schema OrgUnit + closure
+- [ ] Migration + seed org tree
+- [ ] SQL query descendants
 - [ ] (Optional) Curl C-PATCH
-- [ ] Mảng 2 org tree — chưa bắt đầu
 
-## psql quick start
+## Closure table — tóm tắt nhanh (mentor đọc trước khi dạy)
 
-```bash
-docker exec -it taskflow-postgres psql -U taskflow -d taskflow
-```
+Cây ví dụ: Nova → Dev → Backend Team; Nova → HR.
 
-- Kết thúc câu: `;`
-- Prompt `-#` = câu dở → `Ctrl+C`
-- Pager `:` → `q`
-- Bảng Prisma: `"User"`, `"Membership"`, cột `"userId"`, `"workspaceId"`
+| ancestor | descendant | depth | Ý |
+|----------|------------|-------|---|
+| nova | be | 2 | Nova xuống Backend = 2 cấp (qua Dev) |
+| dev | be | 1 | Dev → Backend trực tiếp |
+| be | be | 0 | node tự trỏ mình |
 
-## Bài 4 — mentor chỉ nói 1 việc
-
-**Câu hỏi:** Member thấy task title nào?
-
-**Chuỗi:** Task → Board → Project → Workspace → Membership → User (email `member@taskflow.dev`)
-
-**Nộp:** SQL + số row + các title. Kỳ vọng ~2 task workspace Seed, không có task outsider.
+Không có `hr → be` (ngang hàng). Query descendants của `dev`: `WHERE ancestor = dev AND depth >= 0`.
 
 ## Mentor rules
 
-- Xưng tao/mày; học viên tự gõ
+- Xưng tao/mày; học viên tự gõ code
+- **Bài mới: giải thích đủ (ví dụ + bảng + tradeoff) TRƯỚC checkpoint**
 - Một bài một yêu cầu — đừng hỏi lan
 - Không ask_question nút bấm
+- Cấm SQL/code mẫu đầy đủ để chép
