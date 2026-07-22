@@ -140,11 +140,11 @@ model OrgUnit {
   id          String   @id @default(uuid())
   name        String
   workspaceId String
-  createAt    DateTime @default(now())
+  createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  asAncestor OrgUnitClosure[] @relation("Ancestor")
+  workspace    Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  asAncestor   OrgUnitClosure[] @relation("Ancestor")
   asDescendant OrgUnitClosure[] @relation("Descendant")
 
   @@index([workspaceId])
@@ -155,9 +155,9 @@ model OrgUnitClosure {
   descendantId String
   depth        Int
 
-  ancestor OrgUnit @relation("Ancestor", fields: [ancestorId], references: [id], onDelete: Cascade)
+  ancestor   OrgUnit @relation("Ancestor", fields: [ancestorId], references: [id], onDelete: Cascade)
   descendant OrgUnit @relation("Descendant", fields: [descendantId], references: [id], onDelete: Cascade)
 
   @@id([ancestorId, descendantId])
-  @@index([ancestorId, descendantId])
+  @@index([descendantId])
 }

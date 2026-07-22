@@ -7,6 +7,8 @@ async function main() {
   await prisma.board.deleteMany();
   await prisma.project.deleteMany();
   await prisma.membership.deleteMany();
+  await prisma.orgUnitClosure.deleteMany();
+  await prisma.orgUnit.deleteMany();
   await prisma.workspace.deleteMany();
   await prisma.user.deleteMany();
 
@@ -25,20 +27,52 @@ async function main() {
   });
 
   // 1 workspace + gán role qua Membership
-  const workspace = await prisma.workspace.create({ data: { name: "Seed Workspace" } });
+  const workspaceA = await prisma.workspace.create({ data: { name: "Workspace A " } });
   await prisma.membership.createMany({
     data: [
-      { userId: owner.id, workspaceId: workspace.id, role: "OWNER" },
-      { userId: admin.id, workspaceId: workspace.id, role: "ADMIN" },
-      { userId: member.id, workspaceId: workspace.id, role: "MEMBER" }
+      { userId: owner.id, workspaceId: workspaceA.id, role: "OWNER" },
+      { userId: admin.id, workspaceId: workspaceA.id, role: "ADMIN" },
+      { userId: member.id, workspaceId: workspaceA.id, role: "MEMBER" }
+    ]
+  });
+
+  const orgUnits = await prisma.orgUnit.createMany({
+    data: [
+      { name: "Nova Agency", workspaceId: workspaceA.id },
+      { name: "Production", workspaceId: workspaceA.id },
+      { name: "Dev", workspaceId: workspaceA.id },
+      { name: "Design", workspaceId: workspaceA.id },
+      { name: "HR", workspaceId: workspaceA.id }
+    ]
+  }).then(async () => {
+    return await prisma.orgUnit.findMany({
+      where: { workspaceId: workspaceA.id },
+      orderBy: { createdAt: "asc" }
+    });
+  });
+
+
+  const orgUnitClosure = await prisma.orgUnitClosure.createMany({
+    data: [
+      { ancestorId: orgUnits[0].id, descendantId: orgUnits[0].id, depth: 0 },
+      { ancestorId: orgUnits[0].id, descendantId: orgUnits[1].id, depth: 1 },
+      { ancestorId: orgUnits[1].id, descendantId: orgUnits[2].id, depth: 1 },
+      { ancestorId: orgUnits[1].id, descendantId: orgUnits[3].id, depth: 1 },
+      { ancestorId: orgUnits[0].id, descendantId: orgUnits[4].id, depth: 1 },
+      { ancestorId: orgUnits[3].id, descendantId: orgUnits[3].id, depth: 0 },
+      { ancestorId: orgUnits[0].id, descendantId: orgUnits[3].id, depth: 2 },
+      { ancestorId: orgUnits[4].id, descendantId: orgUnits[4].id, depth: 0 },
+      { ancestorId: orgUnits[2].id, descendantId: orgUnits[2].id, depth: 0 },
+      { ancestorId: orgUnits[0].id, descendantId: orgUnits[2].id, depth: 2 },
+      { ancestorId: orgUnits[1].id, descendantId: orgUnits[1].id, depth: 0 },
     ]
   });
 
   const project = await prisma.project.create({
-    data: { name: "Seed Project", workspaceId: workspace.id }
+    data: { name: "Project A", workspaceId: workspaceA.id }
   });
   const board = await prisma.board.create({
-    data: { name: "Seed Board", projectId: project.id }
+    data: { name: "Board A", projectId: project.id }
   });
 
   // Task do MEMBER tạo + task do OWNER tạo (để test các case RBAC)
@@ -57,6 +91,7 @@ async function main() {
   await prisma.membership.create({
     data: { userId: outsider.id, workspaceId: workspaceB.id, role: "OWNER" }
   });
+
   const projectB = await prisma.project.create({
     data: { name: "Project B", workspaceId: workspaceB.id }
   });

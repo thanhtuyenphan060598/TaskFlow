@@ -22,20 +22,22 @@ Học viên chạy mentor qua `cline` TRONG TERMINAL của Cursor (KHÔNG phải
 (2) Nén context thì bảo học viên MỞ SESSION MỚI (đọc CONTEXT.md), đừng bấm Compact UI.
 (3) Không cần xóa cache/reinstall. Muốn dùng nút bấm/compact mượt thì học viên tự chuyển sang Chat panel IDE.
 
-## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi 2026-07-22 chiều)
+## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi 2026-07-22 tối)
 
 **Source of truth trạng thái:** `.harness/feature_list.json` (`current_focus` = `feat-0.3-iam`). File này = nhật ký học; `progress.md` = log session; `session-handoff.md` = bàn giao agent.
 
-**Vừa xong buổi 2026-07-22 chiều:**
-- Học viên có ý muốn migrate qua Express + làm lại từ đầu vì "rối" → mentor CẢN, đào ra gốc rối = **closure table + SQL thuần** (không phải framework). Giữ Fastify. Bài học tâm lý: đừng đập nhà xây lại vì 1 phòng bừa; rối nằm ở TƯ DUY, đổi framework không chữa.
-- Giảng LẠI closure table CHI TIẾT (6 phần) — học viên THÔNG: bài tay thêm QA(6)/An(7) PASS, `asAncestor(Production)` = #2,9,10,11 PASS.
-- Giảng self-relation Prisma (2 FK cùng trỏ 1 model → phải đặt tên `@relation`) — học viên GÕ XONG schema `OrgUnit` + `OrgUnitClosure`.
+**Vừa xong buổi 2026-07-22 tối:**
+- Schema nợ sửa (`createdAt`, `@@index([descendantId])`) → `prisma validate` PASS.
+- Migration `20260722125052_add_org_unit_closure` apply PASS.
+- Học viên GÕ seed org tree (Workspace A): Nova→Production→{Dev,Design}, HR — 5 OrgUnit + 11 closure PASS.
+- SQL Bài 5 PASS: descendants Production (3 rows); ancestors Dev (3 rows) — hiểu 2 FK đảo chiều.
+- Dev DX: `package.json` scripts (`pnpm db:psql`, `pnpm seed`, …). Makefile thử nhưng Windows Git Bash thiếu `make` → dùng pnpm.
 
 **ĐANG LÀM: GĐ0.3 IAM — feat-0.3-iam (in-progress).**
-- Code Mảng 1 Multi-tenancy Task: **KHÉP** (commit `2e19c66`).
-- SQL drill Bài 1–4: **KHÉP**.
-- **Mảng 2:** lý thuyết PASS + schema GÕ XONG (chưa migrate). **NỢ SỬA trước migrate:** (1) dòng 143 `createAt`→`createdAt`; (2) dòng 162 `@@index([ancestorId,descendantId])` (trùng composite @@id) → `@@index([descendantId])`.
-- **Bước tiếp:** sửa 2 nợ → `prisma validate` → migrate → seed org tree → SQL query descendants.
+- Mảng 1 Task multi-tenancy: **KHÉP**.
+- SQL drill Bài 1–5: **KHÉP**.
+- **Mảng 2 org tree:** schema + migrate + seed + SQL descendants/ancestors **KHÉP**. Optional chưa làm: repository/API đọc cây org.
+- **Bước tiếp:** Mảng 3 ABAC hoặc (optional) org repository + curl C-PATCH.
 
 ### 📘 LÝ THUYẾT CLOSURE TABLE (đã giảng 2026-07-22 — học viên THÔNG, giữ để ôn)
 
@@ -72,36 +74,31 @@ Bảng `OrgUnitClosure` có 2 FK (`ancestorId`, `descendantId`) CÙNG trỏ `Org
 - ✅ **1b WRITE create** — TEST curl 3/3 PASS.
 - ✅ **1c harden** — commit `2e19c66`; tsc OK. Curl C-PATCH **optional, chưa evidence**.
 
-### Mảng 2 org tree (closure table) — ĐANG LÀM (lý thuyết xong, chưa code)
+### Mảng 2 org tree (closure table) — ✅ KHÉP (core); optional repo/API chưa làm
 
 **Mục tiêu:** trong workspace, cây tổ chức công ty → phòng → team → nhân viên. Dùng **closure table** (không chỉ `parentId`) vì query “mọi descendant của node X” hay dùng trong IAM.
 
-**3 cột closure (học viên đã hiểu — checkpoint PASS):**
-
-| Cột | Nghĩa |
-|-----|--------|
-| `ancestor` | node tổ tiên (điểm bắt đầu trên nhánh, có thể = chính nó) |
-| `descendant` | node hậu duệ (ở dưới, có thể = chính nó) |
-| `depth` | số cấp từ ancestor xuống descendant (0 = cùng node) |
-
-Ví dụ cây: Nova → Dev → Backend Team; Nova → HR. Không có hàng `hr → be` (ngang hàng). Hàng `nova → be → depth 2` = từ Nova xuống Backend qua 2 cấp (Nova→Dev→Backend).
-
-**Tradeoff:** ghi nặng hơn (thêm node = thêm nhiều hàng closure), đọc nhẹ (1 query descendants, không recursive).
-
 **Bước Mảng 2 (thứ tự):**
 1. ✅ Lý thuyết + checkpoint closure
-2. ⬜ Học viên thiết kế model `OrgUnit` + bảng closure trong `schema.prisma`
-3. ⬜ Migration + seed org tree mẫu (Seed Workspace)
-4. ⬜ SQL query descendants
+2. ✅ Schema `OrgUnit` + `OrgUnitClosure` (sửa createdAt + index)
+3. ✅ Migration + seed org tree (Workspace A, 11 closure rows)
+4. ✅ SQL descendants / ancestors (2 FK đảo chiều)
 5. ⬜ Repository / API (optional)
+
+| SQL Bài 5 | Nội dung | Trạng thái |
+|-----------|----------|------------|
+| 5a | Descendants của Production (`ancestorId` + JOIN `descendantId`) | ✅ PASS (3 rows) |
+| 5b | Ancestors của Dev (`descendantId` + JOIN `ancestorId`) | ✅ PASS (3 rows) |
 
 - ⬜ **Mảng 3** ABAC. ⬜ **Mảng 4** audit.
 
 **BÀI TIẾP THEO cho agent/mentor mới:**
 
-1. `./.harness/init.sh`
-2. **Mảng 2 bước 2:** học viên phác `OrgUnit` + closure table — mentor review, không viết hộ.
-3. (Optional) Curl C-PATCH.
+1. `./.harness/init.sh` hoặc `pnpm init`
+2. **Mảng 3 ABAC** hoặc org repository (optional)
+3. (Optional) Curl C-PATCH
+
+**Dev commands (root):** `pnpm db:psql`, `pnpm seed`, `pnpm prisma:validate`, `pnpm prisma:migrate -- --name ...`
 
 **Cách mentor (BẮT BUỘC giữ):** mentor CHỈ hướng dẫn + giải thích + review; HỌC VIÊN tự gõ mọi code/lệnh/SQL.
 Tài liệu mentor viết hộ. Code tiếng Anh. Một việc một lúc — nói rõ “tao cần gì” trước khi hỏi thêm.

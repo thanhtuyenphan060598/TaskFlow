@@ -12,7 +12,18 @@
     "build": "pnpm -r build",
     "typecheck": "pnpm -r exec tsc --noEmit",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "init": "./.harness/init.sh",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:psql": "docker exec -it taskflow-postgres psql -U taskflow -d taskflow",
+    "db:logs": "docker logs -f taskflow-postgres",
+    "prisma:generate": "pnpm --filter @taskflow/api exec prisma generate",
+    "prisma:validate": "pnpm --filter @taskflow/api exec prisma validate",
+    "prisma:migrate": "pnpm --filter @taskflow/api exec prisma migrate dev",
+    "prisma:status": "pnpm --filter @taskflow/api exec prisma migrate status",
+    "prisma:studio": "pnpm --filter @taskflow/api exec prisma studio",
+    "seed": "pnpm --filter @taskflow/api exec tsx prisma/seed.ts"
   },
   "devDependencies": {
     "prettier": "^3.9.5",
