@@ -22,16 +22,34 @@ Học viên chạy mentor qua `cline` TRONG TERMINAL của Cursor (KHÔNG phải
 (2) Nén context thì bảo học viên MỞ SESSION MỚI (đọc CONTEXT.md), đừng bấm Compact UI.
 (3) Không cần xóa cache/reinstall. Muốn dùng nút bấm/compact mượt thì học viên tự chuyển sang Chat panel IDE.
 
-## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi 2026-07-21 tối)
+## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi 2026-07-22 chiều)
 
 **Source of truth trạng thái:** `.harness/feature_list.json` (`current_focus` = `feat-0.3-iam`). File này = nhật ký học; `progress.md` = log session; `session-handoff.md` = bàn giao agent.
 
-**Vừa xong buổi này:** SQL **Bài 4 PASS** (2 rows: `Member's task`, `Owner's task`). So sánh ↔ `findAllForUser` + hiểu `some`/`every`. **Mảng 2 org tree** — lý thuyết closure table + checkpoint PASS. **Chưa code schema.**
+**Vừa xong buổi 2026-07-22 chiều:**
+- Học viên có ý muốn migrate qua Express + làm lại từ đầu vì "rối" → mentor CẢN, đào ra gốc rối = **closure table + SQL thuần** (không phải framework). Giữ Fastify. Bài học tâm lý: đừng đập nhà xây lại vì 1 phòng bừa; rối nằm ở TƯ DUY, đổi framework không chữa.
+- Giảng LẠI closure table CHI TIẾT (6 phần) — học viên THÔNG: bài tay thêm QA(6)/An(7) PASS, `asAncestor(Production)` = #2,9,10,11 PASS.
+- Giảng self-relation Prisma (2 FK cùng trỏ 1 model → phải đặt tên `@relation`) — học viên GÕ XONG schema `OrgUnit` + `OrgUnitClosure`.
 
 **ĐANG LÀM: GĐ0.3 IAM — feat-0.3-iam (in-progress).**
 - Code Mảng 1 Multi-tenancy Task: **KHÉP** (commit `2e19c66`).
 - SQL drill Bài 1–4: **KHÉP**.
-- **Mảng 2:** đang lý thuyết closure table → **bước tiếp: thiết kế `OrgUnit` + closure trong `schema.prisma` (học viên tự gõ).**
+- **Mảng 2:** lý thuyết PASS + schema GÕ XONG (chưa migrate). **NỢ SỬA trước migrate:** (1) dòng 143 `createAt`→`createdAt`; (2) dòng 162 `@@index([ancestorId,descendantId])` (trùng composite @@id) → `@@index([descendantId])`.
+- **Bước tiếp:** sửa 2 nợ → `prisma validate` → migrate → seed org tree → SQL query descendants.
+
+### 📘 LÝ THUYẾT CLOSURE TABLE (đã giảng 2026-07-22 — học viên THÔNG, giữ để ôn)
+
+**Vấn đề:** cây tổ chức (Nova→phòng→team) nhưng bảng SQL phẳng (hàng+cột). `parentId` (adjacency list) đọc "mọi descendant của X" phải recursive CTE — nặng. IAM hỏi câu này SUỐT → dùng **closure table**.
+
+**Closure table:** lưu SẴN mọi cặp tổ tiên–hậu duệ. 3 cột: `ancestorId`, `descendantId`, `depth` (0 = cùng node). **Quy tắc vàng:** mỗi node có 1 hàng self `(x,x,0)` — đẻ NGAY khi node sinh ra (KHÔNG define sẵn 1 lần). Hàng self cho phép "node X + mọi thứ dưới nó" gói trong 1 điều kiện `WHERE ancestorId = X`.
+
+**Quy tắc chèn node mới:** node ở tầng k đẻ (k) hàng: self(depth 0) + với từng tổ tiên (depth 1,2,...). VD An dưới Dev(4) dưới Production(2) dưới Nova(1) → 4 hàng: (7,7,0),(4,7,1),(2,7,2),(1,7,3). **descendant LUÔN là node mới**, ancestor là chuỗi tổ tiên.
+
+**Query:** descendants của X = `WHERE ancestorId = X`; ancestors của X = `WHERE descendantId = X`. Không đệ quy. Tradeoff: **ghi nặng** (thêm node = nhiều hàng), **đọc nhẹ** (1 query). IAM đọc > ghi → chọn closure.
+
+### 📘 SELF-RELATION PRISMA (đã giảng 2026-07-22 — giữ để ôn)
+
+Bảng `OrgUnitClosure` có 2 FK (`ancestorId`, `descendantId`) CÙNG trỏ `OrgUnit` → Prisma không tự phân biệt → **phải đặt TÊN `@relation("Ancestor"/"Descendant", ...)`** cho từng quan hệ, và bên `OrgUnit` khai 2 field ngược `asAncestor`/`asDescendant` với tên KHỚP đôi. `asAncestor` của node X = mọi hàng có `ancestorId = X`. Khóa chính = **composite `@@id([ancestorId, descendantId])`** (cặp đã đủ định danh, tự chặn trùng, không cần cột `id` thừa). Index riêng `@@index([descendantId])` để query "tổ tiên của X" nhanh.
 
 ### SQL drill (2026-07-21 — psql, Docker Postgres) — ✅ KHÉP
 

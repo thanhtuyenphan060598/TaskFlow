@@ -94,10 +94,10 @@
     {
       "id": "feat-0.3-iam",
       "name": "GĐ0.3 IAM + Org Structure",
-      "description": "Multi-tenancy Mảng 1a/1b/1c DONE. SQL drill Bài 1–4 PASS. Mảng 2 org tree: lý thuyết closure table xong, chưa code schema. Mảng 3/4 chưa làm.",
+      "description": "Multi-tenancy Mảng 1a/1b/1c DONE. SQL drill Bài 1–4 PASS. Mảng 2 org tree: closure lý thuyết PASS + schema OrgUnit/OrgUnitClosure GÕ XONG (chưa migrate, 2 nợ sửa nhỏ). Mảng 3/4 chưa làm.",
       "dependencies": ["feat-0.2-monorepo"],
       "status": "in-progress",
-      "evidence": "MẢNG 1 code: READ/WRITE/harden commit 2e19c66. SQL DRILL KHÉP 2026-07-21: Bài4 JOIN Task→Membership + WHERE member@taskflow.dev → 2 rows (Member's/Owner's task). Map findAllForUser + some/every. MẢNG 2: closure ancestor/descendant/depth checkpoint PASS; NEXT học viên schema OrgUnit+closure. Quy tắc mentor: bài mới giải thích trước hỏi sau (CONTEXT). C-PATCH optional chưa evidence."
+      "evidence": "MẢNG 1 code: READ/WRITE/harden commit 2e19c66. SQL DRILL KHÉP 2026-07-21: Bài4 JOIN Task→Membership + WHERE member@taskflow.dev → 2 rows. Map findAllForUser + some/every. MẢNG 2 (2026-07-22): closure checkpoint bài tay QA(6)+An(7) PASS, asAncestor(Production)=#2,9,10,11 PASS; schema OrgUnit + OrgUnitClosure (self-relation 2 tên Ancestor/Descendant, composite @@id) GÕ XONG dòng 139-163 + orgUnits ngược trong Workspace. NỢ SỬA trước migrate: (1) dòng143 createAt→createdAt; (2) dòng162 @@index → [descendantId]. NEXT: sửa nợ→validate→migrate→seed→SQL descendants. C-PATCH optional chưa evidence."
     },
     {
       "id": "feat-0.4-design-system",

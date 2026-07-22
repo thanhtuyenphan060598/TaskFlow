@@ -57,6 +57,7 @@ model Workspace {
 
   memberships Membership[] // 1 workspace -> many memberships
   projects    Project[] // 1 workspace -> many projects
+  orgUnits    OrgUnit[] // 1 workspace -> many org units
 }
 
 // Junction table for User <-> Workspace (n-n), carries `role`.
@@ -114,7 +115,7 @@ model Task {
   updatedAt   DateTime   @updatedAt
 
   board     Board          @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  author    User          @relation(fields: [authorId], references: [id])
+  author    User           @relation(fields: [authorId], references: [id])
   assignees TaskAssignee[]
 
   @@index([boardId])
@@ -128,9 +129,35 @@ model TaskAssignee {
   userId    String?
   createdAt DateTime @default(now())
 
-  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  task Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
   user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([taskId, userId]) // assign a user to a task only once
   @@index([userId])
+}
+
+model OrgUnit {
+  id          String   @id @default(uuid())
+  name        String
+  workspaceId String
+  createAt    DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  asAncestor OrgUnitClosure[] @relation("Ancestor")
+  asDescendant OrgUnitClosure[] @relation("Descendant")
+
+  @@index([workspaceId])
+}
+
+model OrgUnitClosure {
+  ancestorId   String
+  descendantId String
+  depth        Int
+
+  ancestor OrgUnit @relation("Ancestor", fields: [ancestorId], references: [id], onDelete: Cascade)
+  descendant OrgUnit @relation("Descendant", fields: [descendantId], references: [id], onDelete: Cascade)
+
+  @@id([ancestorId, descendantId])
+  @@index([ancestorId, descendantId])
 }
