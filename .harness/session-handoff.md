@@ -1,46 +1,37 @@
 # Session Handoff
 
-> Cập nhật cuối buổi: **2026-07-22** (tối) — Mảng 2 org tree KHÉP.
+> Cập nhật: **2026-07-23** (tối) — GĐ0.3 IAM **KHÉP** (Mảng 1–4).
 
 ## Current Objective
 
-- Goal: `feat-0.3-iam` — Mảng 2 **xong** (schema, migrate, seed, SQL drill Bài 5).
-- **Buổi sau:** Mảng 3 ABAC hoặc org repository (optional).
+- **feat-0.3-iam:** DONE
+- **Next:** `feat-0.4-design-system`
 
-## Completed This Session (2026-07-22 tối)
+## Completed 2026-07-23 tối (Mảng 4)
 
-- [x] Schema fix + migrate OrgUnit/OrgUnitClosure
-- [x] Seed org tree (học viên gõ) — Workspace A, 11 closures
-- [x] SQL descendants Production + ancestors Dev
-- [x] pnpm dev scripts (db:psql, seed, prisma:*)
+- [x] AuditLog schema + migration
+- [x] audit.repository + task.service audit hooks
+- [x] Runtime verify UPDATE → AuditLog row
 
-## Not Done
+## IAM summary (GĐ0.3)
 
-- [ ] Org repository / API
-- [ ] Mảng 3 ABAC
-- [ ] Curl C-PATCH optional
-
-## SQL quick ref (2 FK closure)
-
-```sql
--- Descendants of X (go down)
-WHERE ancestorId = X  +  JOIN OrgUnit ON descendantId
-
--- Ancestors of Y (go up)
-WHERE descendantId = Y  +  JOIN OrgUnit ON ancestorId
-```
+| Mang | Status |
+|------|--------|
+| 1 Multi-tenancy Task | DONE |
+| 2 Org tree closure | DONE |
+| 3 ABAC ProjectMember | DONE |
+| 4 Audit log | DONE |
 
 ## Dev commands
 
 ```bash
-pnpm init          # harness verify
-pnpm db:psql       # psql shell
-pnpm seed          # reseed
-pnpm prisma:validate
+pnpm init
+pnpm db:psql
+pnpm seed
 ```
 
 ## Mentor rules
 
-- Xưng tao/mày; học viên tự gõ code (seed lần này học viên gõ)
-- Bài mới: giải thích trước, checkpoint sau
-- Không ask_question nút bấm
+- tao/mày; hoc vien tu go code
+- Bai moi: giai thich truoc, checkpoint sau
+- Khong ask_question nut bam

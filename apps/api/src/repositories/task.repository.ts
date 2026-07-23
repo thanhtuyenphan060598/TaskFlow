@@ -4,7 +4,7 @@ import type { Prisma } from "../generated/prisma/client.js";
 export const taskRepository = {
   //Create a new task row
   create(data: Prisma.TaskCreateInput) {
-    return prisma.task.create({ data });
+    return prisma.task.create({ data, include: { board: { include: { project: { include: { workspace: true } } } } } });
   },
   //Find one task by id, or null if not found
   findById(taskId: string) {
@@ -12,11 +12,11 @@ export const taskRepository = {
   },
   //Update a task by id with partial data
   update(taskId: string, data: Prisma.TaskUpdateInput) {
-    return prisma.task.update({ where: { id: taskId }, data });
+    return prisma.task.update({ where: { id: taskId }, data, include: { board: { include: { project: { include: { workspace: true } } } } } });
   },
   //Delete a task by id
   delete(taskId: string) {
-    return prisma.task.delete({ where: { id: taskId } });
+    return prisma.task.delete({ where: { id: taskId }, include: { board: { include: { project: { include: { workspace: true } } } } } });
   },
 
   //Find the authorId and workspaceId of a task by id

@@ -1,7 +1,7 @@
 {
   "project": "TaskFlow → CompanyOS (Nova Agency)",
   "note": "Source of truth cho tiến độ. status: done | in-progress | not-started. evidence: bằng chứng test/verify đã chạy thật. Xem CONTEXT.md cho chi tiết lý thuyết + bài học từng bước. Roadmap tổng ở CONTEXT.md mục 0-BIS.",
-  "current_focus": "feat-0.3-iam",
+  "current_focus": "feat-0.4-design-system",
   "features": [
     {
       "id": "feat-gd0",
@@ -94,10 +94,10 @@
     {
       "id": "feat-0.3-iam",
       "name": "GĐ0.3 IAM + Org Structure",
-      "description": "Multi-tenancy Mảng 1 DONE. SQL Bài 1–5 PASS. Mảng 2 org tree KHÉP. Mảng 3 ABAC KHÉP. Mảng 4 audit log chưa làm.",
+      "description": "Multi-tenancy M1, SQL 1-5, M2 org tree, M3 ABAC, M4 audit log — all DONE.",
       "dependencies": ["feat-0.2-monorepo"],
-      "status": "in-progress",
-      "evidence": "MẢNG 1: commit 2e19c66. SQL 1-5 KHÉP. MẢNG 2 (2026-07-22): schema+migration+seed org tree+SQL Bài5 PASS. MẢNG 3 (2026-07-23): RoleWorkspace/RoleProject enums; ProjectMember model; migration 20260723040552; project-member.repository.ts; ABAC layer trong permission.service.ts (assertCanModifyTask). Curl 3/3 PASS: MEMBER→403, OWNER(MANAGER)→200, ADMIN(workspace)→200. tsc EXIT 0."
+      "status": "done",
+      "evidence": "M1 commit 2e19c66. SQL 1-5. M2 migration+seed+SQL B5. M3 ProjectMember+curl 3/3 (20260723040552). M4 (2026-07-23 toi): AuditLog+AuditAction migration 20260723125820; audit.repository; task.service CREATE/UPDATE/DELETE audit; PATCH verify 1 AuditLog row UPDATE; tsc PASS."
     },
     {
       "id": "feat-0.4-design-system",

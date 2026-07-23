@@ -22,26 +22,31 @@ Học viên chạy mentor qua `cline` TRONG TERMINAL của Cursor (KHÔNG phải
 (2) Nén context thì bảo học viên MỞ SESSION MỚI (đọc CONTEXT.md), đừng bấm Compact UI.
 (3) Không cần xóa cache/reinstall. Muốn dùng nút bấm/compact mượt thì học viên tự chuyển sang Chat panel IDE.
 
-## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi 2026-07-23 chiều)
+## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi 2026-07-23 tối)
 
-**Source of truth trạng thái:** `.harness/feature_list.json` (`current_focus` = `feat-0.3-iam`). File này = nhật ký học; `progress.md` = log session; `session-handoff.md` = bàn giao agent.
+**Source of truth trạng thái:** `.harness/feature_list.json` (`current_focus` = `feat-0.4-design-system`). File này = nhật ký học; `progress.md` = log session; `session-handoff.md` = bàn giao agent.
 
-**Vừa xong buổi 2026-07-23 (sáng + chiều):**
-- Giải thích RBAC vs ABAC — học viên đã hiểu rõ 2 khái niệm.
-- Học viên tự thiết kế schema `ProjectMember` + đổi enum `Role` → `RoleWorkspace`, thêm `RoleProject` (MANAGER/CONTRIBUTOR/VIEWER).
-- Migration `20260723040552` apply PASS.
-- Seed `ProjectMember` vào `seed.ts` (owner=MANAGER, member=CONTRIBUTOR).
-- `project-member.repository.ts` — `findByUserAndProject` dùng composite unique key.
-- `permission.service.ts` — thêm ABAC layer vào `assertCanModifyTask`: check `ProjectMember.role === MANAGER`.
-- Curl 3/3 PASS: MEMBER→403, OWNER(MANAGER project)→200, ADMIN(workspace)→200. tsc EXIT 0.
+**Vừa xong buổi 2026-07-23 tối:**
+- Mảng 4 audit log: schema `AuditLog` + enum `AuditAction` + migration `20260723125820`.
+- `audit.repository.ts` — `log()` append-only.
+- `task.service` — audit sau CREATE/UPDATE/DELETE; `workspaceId` từ board chain hoặc `assertCanModifyTask` return.
+- Verify: PATCH task → 1 row `AuditLog` (UPDATE) PASS.
 
-**ĐANG LÀM: GĐ0.3 IAM — feat-0.3-iam (in-progress). Mảng 3 ABAC KHÉP.**
-- Mảng 1 Task multi-tenancy: **KHÉP**.
-- SQL drill Bài 1–5: **KHÉP**.
-- **Mảng 2 org tree:** **KHÉP**.
-- **Mảng 3 ABAC:** **KHÉP** (schema + migration + seed + repository + permission.service + curl verify).
-- **Còn lại:** Mảng 4 audit log (optional). Optional: org repository/API, curl C-PATCH.
-- **Bước tiếp:** quyết định làm Mảng 4 audit log hay chuyển sang GĐ0.4 Design System.
+**GĐ0.3 IAM — feat-0.3-iam: ✅ KHÉP (Mảng 1–4).**
+- Mảng 1 multi-tenancy, SQL 1–5, Mảng 2 org tree, Mảng 3 ABAC, Mảng 4 audit log.
+- **Bước tiếp:** **GĐ0.4 Design System** (`packages/ui`) hoặc optional: GET `/audit`, org repo, curl C-PATCH.
+
+### 📘 AUDIT LOG (đã giảng 2026-07-23 tối — học viên THÔNG)
+
+**Mục đích:** truy vết ai làm gì sau khi thao tác thành công — không thay permission.
+
+**Append-only:** chỉ INSERT vào `AuditLog`, không UPDATE/DELETE row audit.
+
+**v1 scope:** Task CREATE/UPDATE/DELETE. Fields: userId, workspaceId, action, resourceType, resourceId, metadata?, createdAt.
+
+**workspaceId:** Task → Board → Project → workspaceId. CREATE: include trên `taskRepository.create`; UPDATE/DELETE: tái dùng return `assertCanModifyTask` (query trước delete).
+
+**Hook:** `task.service` sau DB success → `auditRepository.log(...)`.
 
 ### 📘 ABAC (đã giảng 2026-07-23 — học viên THÔNG, giữ để ôn)
 

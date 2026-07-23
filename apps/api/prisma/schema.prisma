@@ -15,6 +15,12 @@ datasource db {
 
 // ---------- Enums (fixed sets of values) ----------
 
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
 enum RoleWorkspace {
   OWNER
   ADMIN
@@ -54,6 +60,7 @@ model User {
   authoredTasks  Task[] // tasks this user created (1-n)
   assignedTasks  TaskAssignee[] // tasks this user is assigned to (n-n)
   projectMembers ProjectMember[] // projects this user is a member of (n-n)
+  auditLogs      AuditLog[] // audit logs for this user
 }
 
 model Workspace {
@@ -65,6 +72,7 @@ model Workspace {
   memberships Membership[] // 1 workspace -> many memberships
   projects    Project[] // 1 workspace -> many projects
   orgUnits    OrgUnit[] // 1 workspace -> many org units
+  auditLogs   AuditLog[] // 1 workspace -> many audit logs
 }
 
 // Junction table for User <-> Workspace (n-n), carries `role`.
@@ -82,8 +90,6 @@ model Membership {
   @@unique([userId, workspaceId]) // a user joins a workspace only once
   @@index([workspaceId])
 }
-
-
 
 model Project {
   id          String   @id @default(uuid())
@@ -114,6 +120,7 @@ model ProjectMember {
   @@unique([userId, projectId]) // a user joins a project only once
   @@index([projectId])
 }
+
 model Board {
   id        String   @id @default(uuid())
   name      String
@@ -185,4 +192,20 @@ model OrgUnitClosure {
 
   @@id([ancestorId, descendantId])
   @@index([descendantId])
+}
+
+model AuditLog {
+  id           String      @id @default(uuid())
+  userId       String
+  action       AuditAction
+  resourceType String
+  resourceId   String
+  workspaceId  String
+  metadata     Json?
+  createdAt    DateTime    @default(now())
+
+  user      User      @relation(fields: [userId], references: [id])
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@index([workspaceId, createdAt])
 }

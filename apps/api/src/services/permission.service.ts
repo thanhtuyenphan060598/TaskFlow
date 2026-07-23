@@ -15,21 +15,21 @@ export const permissionService = {
     }
 
     if (task.authorId === userId) {
-      return;
+      return task;
     }
 
     const workspaceId = task.board.project.workspaceId;
     const membership = await membershipRepository.findByUserAndWorkspace(userId, workspaceId);
 
     if (membership && canModifyRoles.includes(membership?.role)) {
-      return;
+      return task;
     }
 
     const projectId = task.board.project.id;
     const projectMember = await projectMemberRepository.findByUserAndProject(userId, projectId);
 
     if (projectMember && projectMember.role === RoleProject.MANAGER) {
-      return;
+      return task;
     }
 
     throw forbidden("You don't have permission to modify this task");

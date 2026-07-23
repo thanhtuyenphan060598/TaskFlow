@@ -2,6 +2,8 @@ import { taskRepository } from "../repositories/task.repository.js";
 import type { Prisma } from "../generated/prisma/client.js";
 import { permissionService } from "./permission.service.js";
 import type { CreateTaskSchema, UpdateTaskSchema } from "@taskflow/shared";
+import { auditRepository } from "../repositories/audit.repository.js";
+import { boardRepository } from "../repositories/board.repository.js";
 
 export const taskService = {
   async create(data: CreateTaskSchema, authorId: string) {
@@ -15,7 +17,22 @@ export const taskService = {
       status: data.status,
       priority: data.priority
     };
-    return taskRepository.create(input);
+
+    const task = await taskRepository.create(input);
+    const workspaceId = task?.board.project.workspaceId;
+    if (task && workspaceId) {
+      await auditRepository.log({
+        userId: authorId,
+        action: "CREATE",
+        resourceType: "Task",
+        resourceId: task.id,
+        workspaceId: workspaceId,
+        metadata: {
+          title: task.title,
+        }
+      });
+    }
+    return task;
   },
 
   getAll(userId: string) {
@@ -28,12 +45,38 @@ export const taskService = {
   },
 
   async update(taskId: string, data: UpdateTaskSchema, userId: string) {
-    await permissionService.assertCanModifyTask(taskId, userId);
-    return taskRepository.update(taskId, data);
+    const { board: { project: { workspaceId } } } = await permissionService.assertCanModifyTask(taskId, userId);
+    const task = await taskRepository.update(taskId, data);
+    if (task && workspaceId) {
+      await auditRepository.log({
+        userId: userId,
+        action: "UPDATE",
+        resourceType: "Task",
+        resourceId: task.id,
+        workspaceId: workspaceId,
+        metadata: {
+          title: task.title,
+        }
+      });
+    }
+    return task;
   },
 
   async delete(taskId: string, userId: string) {
-    await permissionService.assertCanModifyTask(taskId, userId);
-    return taskRepository.delete(taskId);
+    const { board: { project: { workspaceId } } } = await permissionService.assertCanModifyTask(taskId, userId);
+    const task = await taskRepository.delete(taskId);
+    if (task && workspaceId) {
+      await auditRepository.log({
+        userId: userId,
+        action: "DELETE",
+        resourceType: "Task",
+        resourceId: task.id,
+        workspaceId: workspaceId,
+        metadata: {
+          title: task.title,
+        }
+      });
+    }
+    return task;
   }
 };
