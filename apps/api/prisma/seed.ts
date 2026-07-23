@@ -52,7 +52,7 @@ async function main() {
   });
 
 
-  const orgUnitClosure = await prisma.orgUnitClosure.createMany({
+  await prisma.orgUnitClosure.createMany({
     data: [
       { ancestorId: orgUnits[0].id, descendantId: orgUnits[0].id, depth: 0 },
       { ancestorId: orgUnits[0].id, descendantId: orgUnits[1].id, depth: 1 },

@@ -3,7 +3,6 @@ import type { Prisma } from "../generated/prisma/client.js";
 import { permissionService } from "./permission.service.js";
 import type { CreateTaskSchema, UpdateTaskSchema } from "@taskflow/shared";
 import { auditRepository } from "../repositories/audit.repository.js";
-import { boardRepository } from "../repositories/board.repository.js";
 
 export const taskService = {
   async create(data: CreateTaskSchema, authorId: string) {
