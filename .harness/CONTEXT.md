@@ -22,22 +22,23 @@ Học viên chạy mentor qua `cline` TRONG TERMINAL của Cursor (KHÔNG phải
 (2) Nén context thì bảo học viên MỞ SESSION MỚI (đọc CONTEXT.md), đừng bấm Compact UI.
 (3) Không cần xóa cache/reinstall. Muốn dùng nút bấm/compact mượt thì học viên tự chuyển sang Chat panel IDE.
 
-## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi 2026-07-22 tối)
+## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi 2026-07-23 sáng)
 
 **Source of truth trạng thái:** `.harness/feature_list.json` (`current_focus` = `feat-0.3-iam`). File này = nhật ký học; `progress.md` = log session; `session-handoff.md` = bàn giao agent.
 
-**Vừa xong buổi 2026-07-22 tối:**
-- Schema nợ sửa (`createdAt`, `@@index([descendantId])`) → `prisma validate` PASS.
-- Migration `20260722125052_add_org_unit_closure` apply PASS.
-- Học viên GÕ seed org tree (Workspace A): Nova→Production→{Dev,Design}, HR — 5 OrgUnit + 11 closure PASS.
-- SQL Bài 5 PASS: descendants Production (3 rows); ancestors Dev (3 rows) — hiểu 2 FK đảo chiều.
-- Dev DX: `package.json` scripts (`pnpm db:psql`, `pnpm seed`, …). Makefile thử nhưng Windows Git Bash thiếu `make` → dùng pnpm.
+**Vừa xong buổi 2026-07-23 sáng:**
+- Giải thích RBAC vs ABAC — học viên đã hiểu rõ 2 khái niệm.
+- Học viên tự thiết kế schema `ProjectMember` + đổi enum `Role` → `RoleWorkspace`, thêm `RoleProject` (MANAGER/CONTRIBUTOR/VIEWER).
+- `prisma validate` PASS.
+- Migration `20260723040552` apply PASS: tạo bảng `ProjectMember`, drop enum `Role` cũ, tạo `RoleWorkspace`/`RoleProject`.
+- `prisma generate` lại + `pnpm seed` PASS.
 
 **ĐANG LÀM: GĐ0.3 IAM — feat-0.3-iam (in-progress).**
 - Mảng 1 Task multi-tenancy: **KHÉP**.
 - SQL drill Bài 1–5: **KHÉP**.
-- **Mảng 2 org tree:** schema + migrate + seed + SQL descendants/ancestors **KHÉP**. Optional chưa làm: repository/API đọc cây org.
-- **Bước tiếp:** Mảng 3 ABAC hoặc (optional) org repository + curl C-PATCH.
+- **Mảng 2 org tree:** schema + migrate + seed + SQL descendants/ancestors **KHÉP**.
+- **Mảng 3 ABAC:** lý thuyết + schema (`ProjectMember`) + migration **KHÉP**. **CÒN LẠI:** seed ProjectMember + sửa `permission.service.ts` + curl verify.
+- **Bước tiếp:** seed ProjectMember vào `seed.ts` → sửa `assertCanModifyTask` thêm ABAC layer → curl test.
 
 ### 📘 LÝ THUYẾT CLOSURE TABLE (đã giảng 2026-07-22 — học viên THÔNG, giữ để ôn)
 

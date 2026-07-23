@@ -94,10 +94,10 @@
     {
       "id": "feat-0.3-iam",
       "name": "GĐ0.3 IAM + Org Structure",
-      "description": "Multi-tenancy Mảng 1 DONE. SQL Bài 1–5 PASS. Mảng 2 org tree KHÉP (schema+migrate+seed+SQL descendants/ancestors). Mảng 3/4 chưa làm.",
+      "description": "Multi-tenancy Mảng 1 DONE. SQL Bài 1–5 PASS. Mảng 2 org tree KHÉP. Mảng 3 ABAC: lý thuyết+schema+migration DONE; seed ProjectMember + permission.service chưa làm. Mảng 4 chưa làm.",
       "dependencies": ["feat-0.2-monorepo"],
       "status": "in-progress",
-      "evidence": "MẢNG 1: commit 2e19c66. SQL 1-5 KHÉP. MẢNG 2 (2026-07-22): schema fix createdAt+index; migration 20260722125052_add_org_unit_closure; seed Workspace A 5 OrgUnit+11 closure (học viên gõ); SQL Bài5 descendants Production 3 rows + ancestors Dev 3 rows. pnpm scripts db:psql/seed/prisma. NEXT Mảng3 ABAC or org repo optional. C-PATCH optional."
+      "evidence": "MẢNG 1: commit 2e19c66. SQL 1-5 KHÉP. MẢNG 2 (2026-07-22): schema+migration+seed org tree+SQL Bài5 PASS. MẢNG 3 (2026-07-23): enum RoleWorkspace/RoleProject; model ProjectMember; migration 20260723040552 PASS; prisma generate+seed PASS. NEXT: seed ProjectMember + sửa permission.service.ts ABAC layer + curl verify."
     },
     {
       "id": "feat-0.4-design-system",

@@ -15,10 +15,16 @@ datasource db {
 
 // ---------- Enums (fixed sets of values) ----------
 
-enum Role {
+enum RoleWorkspace {
   OWNER
   ADMIN
   MEMBER
+}
+
+enum RoleProject {
+  MANAGER
+  CONTRIBUTOR
+  VIEWER
 }
 
 enum TaskStatus {
@@ -44,9 +50,10 @@ model User {
   updatedAt DateTime @updatedAt
 
   // relations
-  memberships   Membership[] // 1 user -> many memberships (n-n with Workspace)
-  authoredTasks Task[] // tasks this user created (1-n)
-  assignedTasks TaskAssignee[] // tasks this user is assigned to (n-n)
+  memberships    Membership[] // 1 user -> many memberships (n-n with Workspace)
+  authoredTasks  Task[] // tasks this user created (1-n)
+  assignedTasks  TaskAssignee[] // tasks this user is assigned to (n-n)
+  projectMembers ProjectMember[] // projects this user is a member of (n-n)
 }
 
 model Workspace {
@@ -62,12 +69,12 @@ model Workspace {
 
 // Junction table for User <-> Workspace (n-n), carries `role`.
 model Membership {
-  id          String   @id @default(uuid())
+  id          String        @id @default(uuid())
   userId      String
   workspaceId String
-  role        Role     @default(MEMBER)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  role        RoleWorkspace @default(MEMBER)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
@@ -76,6 +83,8 @@ model Membership {
   @@index([workspaceId])
 }
 
+
+
 model Project {
   id          String   @id @default(uuid())
   name        String
@@ -83,12 +92,28 @@ model Project {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  boards    Board[]
+  workspace      Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  boards         Board[]
+  projectMembers ProjectMember[]
 
   @@index([workspaceId])
 }
 
+// Junction table for User <-> Project (n-n), carries `role`.
+model ProjectMember {
+  id        String      @id @default(uuid())
+  userId    String
+  projectId String
+  role      RoleProject @default(CONTRIBUTOR)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId]) // a user joins a project only once
+  @@index([projectId])
+}
 model Board {
   id        String   @id @default(uuid())
   name      String
