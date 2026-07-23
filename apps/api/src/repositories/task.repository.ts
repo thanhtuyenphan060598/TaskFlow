@@ -29,7 +29,8 @@ export const taskRepository = {
           select: {
             project: {
               select: {
-                workspaceId: true
+                workspaceId: true,
+                id: true,
               }
             }
           }
