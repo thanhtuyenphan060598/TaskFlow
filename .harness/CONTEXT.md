@@ -22,23 +22,42 @@ Học viên chạy mentor qua `cline` TRONG TERMINAL của Cursor (KHÔNG phải
 (2) Nén context thì bảo học viên MỞ SESSION MỚI (đọc CONTEXT.md), đừng bấm Compact UI.
 (3) Không cần xóa cache/reinstall. Muốn dùng nút bấm/compact mượt thì học viên tự chuyển sang Chat panel IDE.
 
-## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi 2026-07-23 sáng)
+## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi 2026-07-23 chiều)
 
 **Source of truth trạng thái:** `.harness/feature_list.json` (`current_focus` = `feat-0.3-iam`). File này = nhật ký học; `progress.md` = log session; `session-handoff.md` = bàn giao agent.
 
-**Vừa xong buổi 2026-07-23 sáng:**
+**Vừa xong buổi 2026-07-23 (sáng + chiều):**
 - Giải thích RBAC vs ABAC — học viên đã hiểu rõ 2 khái niệm.
 - Học viên tự thiết kế schema `ProjectMember` + đổi enum `Role` → `RoleWorkspace`, thêm `RoleProject` (MANAGER/CONTRIBUTOR/VIEWER).
-- `prisma validate` PASS.
-- Migration `20260723040552` apply PASS: tạo bảng `ProjectMember`, drop enum `Role` cũ, tạo `RoleWorkspace`/`RoleProject`.
-- `prisma generate` lại + `pnpm seed` PASS.
+- Migration `20260723040552` apply PASS.
+- Seed `ProjectMember` vào `seed.ts` (owner=MANAGER, member=CONTRIBUTOR).
+- `project-member.repository.ts` — `findByUserAndProject` dùng composite unique key.
+- `permission.service.ts` — thêm ABAC layer vào `assertCanModifyTask`: check `ProjectMember.role === MANAGER`.
+- Curl 3/3 PASS: MEMBER→403, OWNER(MANAGER project)→200, ADMIN(workspace)→200. tsc EXIT 0.
 
-**ĐANG LÀM: GĐ0.3 IAM — feat-0.3-iam (in-progress).**
+**ĐANG LÀM: GĐ0.3 IAM — feat-0.3-iam (in-progress). Mảng 3 ABAC KHÉP.**
 - Mảng 1 Task multi-tenancy: **KHÉP**.
 - SQL drill Bài 1–5: **KHÉP**.
-- **Mảng 2 org tree:** schema + migrate + seed + SQL descendants/ancestors **KHÉP**.
-- **Mảng 3 ABAC:** lý thuyết + schema (`ProjectMember`) + migration **KHÉP**. **CÒN LẠI:** seed ProjectMember + sửa `permission.service.ts` + curl verify.
-- **Bước tiếp:** seed ProjectMember vào `seed.ts` → sửa `assertCanModifyTask` thêm ABAC layer → curl test.
+- **Mảng 2 org tree:** **KHÉP**.
+- **Mảng 3 ABAC:** **KHÉP** (schema + migration + seed + repository + permission.service + curl verify).
+- **Còn lại:** Mảng 4 audit log (optional). Optional: org repository/API, curl C-PATCH.
+- **Bước tiếp:** quyết định làm Mảng 4 audit log hay chuyển sang GĐ0.4 Design System.
+
+### 📘 ABAC (đã giảng 2026-07-23 — học viên THÔNG, giữ để ôn)
+
+**RBAC (Role-Based):** quyền gắn vào vai (role) toàn workspace — OWNER/ADMIN/MEMBER. Thô, không phân biệt "ai quản lý project nào".
+
+**ABAC (Attribute-Based):** quyền dựa trên thuộc tính nhiều chiều — user là ai, resource thuộc đâu, action là gì. Cho phép "Trưởng phòng Dev chỉ manage task phòng Dev".
+
+**Triển khai trong dự án (practical ABAC):** thêm bảng `ProjectMember` (role ở cấp project: MANAGER/CONTRIBUTOR/VIEWER). Logic check `assertCanModifyTask`:
+1. Mày là author? → pass (sở hữu trực tiếp)
+2. Mày là OWNER/ADMIN workspace? → pass (RBAC layer — quyền tối cao)
+3. Mày là MANAGER của project chứa task? → pass (ABAC layer)
+4. Không thỏa → 403
+
+Thứ tự = cheap check trước (author: so sánh field, không query thêm), expensive check sau (ABAC: 1 query thêm vào ProjectMember).
+
+**Prisma composite unique key:** `@@unique([userId, projectId])` → Prisma tự sinh tên `userId_projectId` → dùng trong `findUnique({ where: { userId_projectId: { userId, projectId } } })`.
 
 ### 📘 LÝ THUYẾT CLOSURE TABLE (đã giảng 2026-07-22 — học viên THÔNG, giữ để ôn)
 

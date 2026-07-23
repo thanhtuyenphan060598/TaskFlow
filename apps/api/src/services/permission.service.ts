@@ -2,12 +2,13 @@ import { notFound, forbidden } from "../lib/errors.js";
 import { taskRepository } from "../repositories/task.repository.js";
 import { membershipRepository } from "../repositories/membership.repository.js";
 import { boardRepository } from "../repositories/board.repository.js";
-import { Role } from "../generated/prisma/client.js";
+import { RoleWorkspace, RoleProject } from "../generated/prisma/client.js";
+import { projectMemberRepository } from "../repositories/project-member.repository.js";
 
 export const permissionService = {
   async assertCanModifyTask(taskId: string, userId: string) {
     const task = await taskRepository.findAuthorAndWorkspaceId(taskId);
-    const canModifyRoles: Role[] = [Role.OWNER, Role.ADMIN];
+    const canModifyRoles: (RoleWorkspace | RoleProject)[] = [RoleWorkspace.OWNER, RoleWorkspace.ADMIN, RoleProject.MANAGER, RoleProject.CONTRIBUTOR];
 
     if (!task) {
       throw notFound(`Task with id ${taskId} not found`);
@@ -23,6 +24,14 @@ export const permissionService = {
     if (membership && canModifyRoles.includes(membership?.role)) {
       return;
     }
+
+    const projectId = task.board.project.id;
+    const projectMember = await projectMemberRepository.findByUserAndProject(userId, projectId);
+
+    if (projectMember && projectMember.role === RoleProject.MANAGER) {
+      return;
+    }
+
     throw forbidden("You don't have permission to modify this task");
   },
 

@@ -83,6 +83,13 @@ async function main() {
     data: { title: "Owner's task", boardId: board.id, authorId: owner.id }
   });
 
+  await prisma.projectMember.createMany({
+    data: [
+      { projectId: project.id, userId: admin.id, role: "MANAGER" },
+      { projectId: project.id, userId: member.id, role: "CONTRIBUTOR" },
+    ]
+  })
+
   // Workspace B (separate tenant) + outsider user to test isolation
   const outsider = await prisma.user.create({
     data: { email: "outsider@taskflow.dev", password, name: "Outsider User" }
