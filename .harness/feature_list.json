@@ -104,8 +104,8 @@
       "name": "GĐ0.4 Design System nền",
       "description": "packages/ui (Button/Table/Modal/Form), Storybook, theme, layout, auth-guard FE",
       "dependencies": ["feat-0.3-iam"],
-      "status": "not-started",
-      "evidence": ""
+      "status": "in-progress",
+      "evidence": "2026-07-25: packages/ui scaffold (peer+dev React 19, tsconfig bundler+DOM, Button L0, typecheck PASS). Styling mix CSS vars/modules/Tailwind/Radix chốt in CONTEXT. Lý thuyết DS buổi 1 partial. Storybook/tokens pending."
     },
     {
       "id": "feat-app1-task",

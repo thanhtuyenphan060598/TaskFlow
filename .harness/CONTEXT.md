@@ -12,6 +12,61 @@
 Học viên yêu cầu mentor xưng **"tao"**, gọi học viên là **"mày"**. KHÔNG dùng bạn/tôi/ta/tớ/mình.
 Giọng thẳng thắn, đời thường, vẫn nghiêm túc về kiến thức. Code + comment vẫn TIẾNG ANH.
 
+## 📖 THUẬT NGỮ TIẾNG ANH — BẮT BUỘC giải thích kèm (học viên chốt 2026-07-25)
+
+**Quy tắc mentor:** Mỗi khi dùng thuật ngữ tiếng Anh chuyên ngành trong bài giảng → **luôn** ghi nghĩa tiếng Việt trong ngoặc ngay cạnh. Không nhồi jargon (thuật ngữ chuyên ngành) không giải thích.
+
+**Format:** `english-term (nghĩa tiếng Việt ngắn, dễ hiểu)`
+
+## 📚 CÁCH DẠY — GIẢI THÍCH TRƯỚC, THỰC HÀNH SAU (học viên chốt 2026-07-25)
+
+**Quy tắc bắt buộc:** Gặp **keyword mới** hoặc **kiến thức mới** → mentor **giải thích trước** (một ý, ví dụ đời thường, ít bảng) → học viên **ok** → mới gõ lệnh / sửa file.
+
+**Thứ tự mỗi bài:**
+
+1. **Lý thuyết** — một ý chính; thuật ngữ Anh kèm `(nghĩa Việt)` mỗi lần xuất hiện
+2. **Hỏi “hiểu chưa”** — học viên gõ text (không nút bấm); checkpoint chỉ khi cần, không spam
+3. **Thực hành** — học viên tự gõ; mentor review diff / output
+
+**Cấm:** nhồi nhiều khái niệm một lúc; nhảy scaffold trước khi có bức tranh; giảng kiểu tài liệu kỹ thuật khi học viên chưa có hình mental model.
+
+**Phản hồi buổi 2026-07-25 tối:** học viên báo giải thích rối — buổi sau ưu tiên **một bài một ý**, analogy (ví dụ đời thường) trước jargon; tóm tắt “xây nhà” ở cuối buổi đã dùng làm template.
+
+**Self-check mentor (GĐ0.4):** đã nhảy scaffold + Button trước lý thuyết — không lặp lại.
+
+**Từ điển nhanh (bổ sung dần khi gặp):**
+
+| Thuật ngữ | Nghĩa |
+|-----------|--------|
+| **headless** (UI không đầu / không có giao diện sẵn) | Thư viện UI lo **behavior (hành vi) + a11y (trợ năng)** — **không** ship CSS đẹp sẵn. Radix gọi là **unstyled (không style sẵn)** trên docs chính thức. Mày tự **skin (lớp vỏ)** bằng Tailwind/CSS. |
+| **unstyled** (không style sẵn) | Từ Radix dùng trên website — cùng nghĩa headless: có component logic, không có look mặc định. |
+| **styled UI library** (thư viện UI có giao diện sẵn) | MUI, Ant Design — ship cả look + behavior; override theme khó hơn headless. |
+| **peerDependencies** (phụ thuộc ngang hàng) | Package **không tự cài** dependency đó; bắt app host (ví dụ Next) phải cài sẵn — tránh 2 bản React trong 1 app. |
+| **devDependencies** (phụ thuộc lúc phát triển) | Chỉ cần khi **code/test package** trên máy dev; không bắt app cuối phải mang theo. |
+| **design system** (hệ thống thiết kế) | Bộ component + màu + spacing + quy ước UI dùng chung cả product. |
+| **design tokens** (token thiết kế) | Biến gốc: màu, cỡ chữ, khoảng cách — ví dụ `--color-primary`. |
+| **scoped** (phạm vi cục bộ) | Style chỉ áp component đó, không tràn sang component khác. |
+| **singleton** (một instance duy nhất) | Chỉ được **một bản** runtime — React cả app chỉ được mount **một** React. |
+| **build tool** (công cụ build) | Biến source TS/JSX/CSS → artifact (sản phẩm build) chạy được — tsc emit, Vite, tsup, Next build. |
+| **bundler** (công cụ đóng gói) | Webpack/Vite/Next gom nhiều module → bundle (một hoặc vài file) chạy browser. |
+| **compile / transpile** (biên dịch) | Đổi TS/JSX → JS browser hiểu. **Transpile** = biên dịch từng file, thường không tối ưu nặng như full compile production. |
+| **emit** (xuất file) | `tsc` ghi file `.js` ra disk; `noEmit: true` = chỉ check type, không ghi file. |
+| **dist** (thư mục build) | Output sau build — `dist/index.js`, `.d.ts`… Khác `src/` (source gốc). |
+| **source-only package** (package chỉ trỏ source) | `main: "./src/index.ts"` — chưa build riêng; consumer (app/bundler) lo compile. |
+| **consume** (tiêu thụ / dùng package) | App import `@taskflow/ui` — app là consumer, ui là library được dùng. |
+| **transpilePackages** (config Next compile workspace) | Next biên dịch package monorepo trong `node_modules` workspace — cần khi ui trỏ `.ts` source. |
+| **HMR** (hot module reload — sửa thấy ngay) | Dev server reload module vừa sửa, không refresh cả trang. Storybook/Vite có. |
+| **moduleResolution: bundler** (cách TS resolve import cho bundler) | Luật import cho code **đi qua bundler** (Next/Vite), không ép đuôi `.js` kiểu Node ESM. |
+| **NodeNext** (luật import kiểu Node ESM) | Dùng cho **api/shared** chạy/tham chiếu Node — `"type":"module"` + import có đuôi `.js`. **Không** copy sang `packages/ui`. |
+| **implementation detail** (chi tiết triển khai nội bộ) | Radix/Tailwind nằm **trong** `@taskflow/ui`; app không import trực tiếp. |
+| **skin** (lớp vỏ giao diện) | CSS/Tailwind bọc ngoài component headless — phần user nhìn thấy. |
+| **a11y / accessibility** (trợ năng) | Người khiếm thị/bàn phím vẫn dùng được — ARIA, focus, tab order. |
+| **portal** (cổng render) | Render UI ra **chỗ khác** trong DOM (thường `document.body`) — Modal không bị `overflow:hidden` của cha che. |
+| **focus trap** (bẫy focus) | Tab chỉ loop trong Modal, không nhảy ra nền trang phía sau. |
+| **asChild** (ghép vào con) | Pattern Radix: behavior bọc **element con do mày chọn** (ví dụ `<Button>`) thay vì render `<button>` riêng. |
+| **Storybook** (sổ truyện component) | App mini xem/thử component **tách khỏi** backend và page thật. |
+| **spread props** (`...props`) | Trải mọi prop còn lại xuống thẻ con — `onClick`, `className`… không liệt kê hết. |
+
 ## ⚠️ LỖI TOOL: KHÔNG dùng ask_question (nút bấm tương tác) — ĐÃ CHẨN ĐOÁN XONG
 
 Học viên chạy mentor qua `cline` TRONG TERMINAL của Cursor (KHÔNG phải Chat panel IDE).
@@ -22,19 +77,44 @@ Học viên chạy mentor qua `cline` TRONG TERMINAL của Cursor (KHÔNG phải
 (2) Nén context thì bảo học viên MỞ SESSION MỚI (đọc CONTEXT.md), đừng bấm Compact UI.
 (3) Không cần xóa cache/reinstall. Muốn dùng nút bấm/compact mượt thì học viên tự chuyển sang Chat panel IDE.
 
-## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi 2026-07-23 tối)
+## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi 2026-07-25 tối)
 
 **Source of truth trạng thái:** `.harness/feature_list.json` (`current_focus` = `feat-0.4-design-system`). File này = nhật ký học; `progress.md` = log session; `session-handoff.md` = bàn giao agent.
 
-**Vừa xong buổi 2026-07-23 tối:**
-- Mảng 4 audit log: schema `AuditLog` + enum `AuditAction` + migration `20260723125820`.
-- `audit.repository.ts` — `log()` append-only.
-- `task.service` — audit sau CREATE/UPDATE/DELETE; `workspaceId` từ board chain hoặc `assertCanModifyTask` return.
-- Verify: PATCH task → 1 row `AuditLog` (UPDATE) PASS.
+**Vừa xong buổi 2026-07-25 (GĐ0.4 — session 1):**
+- Scaffold `packages/ui`: peer+dev React 19, tsconfig **bundler** (không copy NodeNext), `pnpm typecheck` PASS.
+- Button Lớp 0 (`Button.tsx` + `index.ts` export).
+- Harness: quy tắc thuật ngữ `(Việt)`, cách dạy giải thích-trước, từ điển DS, roadmap styling mix CSS vars + CSS modules + Tailwind + Radix.
+- Lý thuyết đã giảng (chưa consolidate — học viên cần ôn lại đơn giản): monorepo DS scope, peer vs dev, source-only ui, Prisma Studio ↔ react-dom lockfile, Radix vs MUI, api không import ui.
+- **Chưa:** Storybook, tokens.css, Button styling, review Button từng dòng (bài 6).
+
+**Bước tiếp buổi sau:** mở session → đọc CONTEXT → `./.harness/init.sh` → học viên chọn **một** mục ôn (A–E) hoặc thực hành **tokens Lớp 1** / Storybook sau khi hiểu bức tranh.
 
 **GĐ0.3 IAM — feat-0.3-iam: ✅ KHÉP (Mảng 1–4).**
-- Mảng 1 multi-tenancy, SQL 1–5, Mảng 2 org tree, Mảng 3 ABAC, Mảng 4 audit log.
-- **Bước tiếp:** **GĐ0.4 Design System** (`packages/ui`) hoặc optional: GET `/audit`, org repo, curl C-PATCH.
+
+### GĐ0.4 Design System — quyết định styling (2026-07-25)
+
+Học viên chốt: **mix A+B+C để học** — không chọn một framework duy nhất.
+
+| Lớp | Công cụ | Học gì | Component minh họa |
+|-----|---------|--------|-------------------|
+| 0 | React thuần | package DS, peerDeps, props typing, export | **Button** (structure) |
+| 1 | **CSS custom properties** (`theme.css`) | design tokens — màu, spacing, radius, dark mode hook | Button + `data-variant` |
+| 2 | **CSS Modules** | scoped style, không global leak, `var(--token)` | Button `.module.css` |
+| 3 | **Tailwind** trong `@taskflow/ui` | utility, config extend tokens, DX khi scale | Button variants → Table |
+| 4 | **Radix** (headless — không CSS sẵn, chỉ behavior + a11y) | focus trap (bẫy focus), keyboard, `asChild` (ghép vào con) | **Modal/Dialog** (không Radix cho Button) |
+
+**Nguyên tắc:** App (`apps/web`) chỉ import `@taskflow/ui/*`. Radix/Tailwind là **implementation detail** (chi tiết triển khai nội bộ) bên trong package — giống shadcn nhưng do TaskFlow sở hữu.
+
+**tsconfig `packages/ui` — KHÁC api/shared (2026-07-25):**
+
+| Package | `moduleResolution` | Vì sao |
+|---------|-------------------|--------|
+| `apps/api`, `packages/shared` | **NodeNext** | Code chạy/tham chiếu **Node ESM** — import có đuôi `.js`. |
+| `packages/ui` | **bundler** | Component **browser** — sau này Next/Vite bundle; **không** copy config Node. |
+| | `lib`: DOM + DOM.Iterable | UI cần type DOM (`HTMLButtonElement`…). |
+
+**Tiến độ scaffold:** `packages/ui` peer+dev React 19, tsconfig **bundler**, Button Lớp 0, typecheck PASS. Lý thuyết DS buổi 1 xong một phần — học viên cần ôn đơn giản trước Storybook/tokens.
 
 ### 📘 AUDIT LOG (đã giảng 2026-07-23 tối — học viên THÔNG)
 
