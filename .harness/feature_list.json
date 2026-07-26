@@ -1,7 +1,7 @@
 {
   "project": "TaskFlow → CompanyOS (Nova Agency)",
   "note": "Source of truth cho tiến độ. status: done | in-progress | not-started. evidence: bằng chứng test/verify đã chạy thật. Xem CONTEXT.md cho chi tiết lý thuyết + bài học từng bước. Roadmap tổng ở CONTEXT.md mục 0-BIS.",
-  "current_focus": "feat-0.4-design-system",
+  "current_focus": "feat-app1-task",
   "features": [
     {
       "id": "feat-gd0",
@@ -104,8 +104,8 @@
       "name": "GĐ0.4 Design System nền",
       "description": "packages/ui (Button/Table/Modal/Form), Storybook, theme, layout, auth-guard FE",
       "dependencies": ["feat-0.3-iam"],
-      "status": "in-progress",
-      "evidence": "2026-07-26: Tailwind v4 @theme tokens, Button variants, Storybook 10, Modal+Radix Dialog, typecheck PASS. Remaining: Table/Form/layout."
+      "status": "done",
+      "evidence": "2026-07-26: Tailwind @theme, Button, Modal+Radix, Storybook, Table, FormField+Input+Label, typecheck PASS. AuthGuard+AppLayout removed — app shell/auth belong to apps/web."
     },
     {
       "id": "feat-app1-task",

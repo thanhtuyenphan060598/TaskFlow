@@ -79,17 +79,14 @@ Học viên chạy mentor qua `cline` TRONG TERMINAL của Cursor (KHÔNG phải
 
 ## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi 2026-07-26)
 
-**Source of truth trạng thái:** `.harness/feature_list.json` (`current_focus` = `feat-0.4-design-system`).
+**Source of truth trạng thái:** `.harness/feature_list.json` (`current_focus` = `feat-app1-task`).
 
-**Vừa xong buổi 2026-07-26 (GĐ0.4 — session 2):**
-- Tailwind v4 hybrid C: `globals.css` `@theme` tokens + Button variants (primary/secondary).
-- Storybook 10 (`storybook` + `@storybook/react-vite`; không dùng addon-essentials — gộp core).
-- Modal + `@radix-ui/react-dialog` + stories; `asChild` + Button trigger/close.
-- `css.d.ts`, `.vscode` ignore unknown Tailwind at-rules, `pnpm typecheck` PASS.
+**Vừa xong buổi 2026-07-26 (GĐ0.4 — KHÉP):**
+- Button, Modal+Radix, Table, FormField/Input/Label, Tailwind tokens, Storybook 10.
+- **Đã xóa** AuthGuard + AppLayout khỏi ui (học viên review — thuộc apps/web).
+- PR self-review checklist ghi CONTEXT.
 
-**Chưa GĐ0.4:** Table, Form, layout, auth-guard FE.
-
-**Bước tiếp:** Table component hoặc Form — giải thích trước thực hành.
+**Bước tiếp:** GĐ1 `apps/web` — Next.js dùng `@taskflow/ui`, React Query, RHF+Zod.
 
 **GĐ0.3 IAM — feat-0.3-iam: ✅ KHÉP (Mảng 1–4).**
 
@@ -114,7 +111,28 @@ Học viên chốt **C — Hybrid:** token = CSS vars trong Tailwind v4 `@theme`
 | `packages/ui` | **bundler** | Component **browser** — sau này Next/Vite bundle; **không** copy config Node. |
 | | `lib`: DOM + DOM.Iterable | UI cần type DOM (`HTMLButtonElement`…). |
 
-**Tiến độ:** Button ✅ Tailwind tokens ✅ Storybook ✅ Modal/Radix ✅. Còn Table, Form, layout.
+**Ranh giới `@taskflow/ui` (chốt 2026-07-26):** CHỈ presentational widgets — Button, Modal, Table, Input/Label/FormField, tokens. **KHÔNG** auth guard, **KHÔNG** app layout/shell — thuộc `apps/web` (GĐ1).
+
+## ✅ PR SELF-REVIEW CHECKLIST (học viên chốt 2026-07-26 — chạy trước mọi commit/accept AI code)
+
+> Học viên = reviewer cuối. AI/mentor có thể sai ranh giới package. **Vibe code không qua checklist = technical debt (nợ kỹ thuật).**
+
+**Trước khi accept file mới / diff lớn — hỏi 5 câu:**
+
+1. **Package đúng chưa?** Code này thuộc `apps/*` hay `packages/*`? Có import ngược chiều (app logic vào ui, React vào api) không?
+2. **Có cần biết user/session/route/API không?** Có → **không** vào `@taskflow/ui` / `shared`.
+3. **Widget hay shell?** Nút/input/bảng/modal = ui. Header/sidebar/layout page/auth guard = **apps/web**.
+4. **Giải thích được 1 câu “vì sao file nằm đây”?** Không → dừng, hỏi lại mentor/AI.
+5. **Typecheck/init chạy thật chưa?** `pnpm typecheck` — không trust “nhìn qua ổn”.
+
+**Red flags (cờ đỏ) — reject ngay nếu thấy trong `packages/ui`:**
+
+- AuthGuard, ProtectedRoute, `useAuth`, redirect login
+- AppLayout / DashboardShell / sidebar nav product-specific
+- `fetch` / API call / React Query hooks
+- Import từ `apps/api` hoặc Prisma
+
+**Bài học GĐ0.4:** AuthGuard + AppLayout đã từng bị nhét nhầm ui — học viên review catch, đã xóa.
 
 ### 📘 AUDIT LOG (đã giảng 2026-07-23 tối — học viên THÔNG)
 

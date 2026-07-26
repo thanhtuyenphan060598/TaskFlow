@@ -2,7 +2,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import type { ReactNode } from "react";
 import { Button } from "./Button";
 
-type ModalProps = {
+export type ModalProps = {
   children: ReactNode;
   trigger: ReactNode;
   description?: string;
