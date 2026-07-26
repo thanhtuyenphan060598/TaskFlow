@@ -1,0 +1,19 @@
+@import "tailwindcss";
+@source "../**/*.{ts,tsx}";
+
+@theme {
+    --color-primary: #2563eb;
+    --color-primary-hover: #1d4ed8;
+    --color-surface: #ffffff;
+    --color-text: #111827;
+    --color-text-on-primary: #ffffff;
+    --color-secondary: #f3f4f6;
+    --color-secondary-hover: #e5e7eb;
+    --color-secondary-text: #374151;
+    --color-overlay: rgb(0 0 0 / 50%);
+    --spacing-button-x: 0.75rem;
+    --spacing-button-y: 0.5rem;
+    --spacing-md: 0.5rem;
+    --radius-md: 0.375rem;
+    --font-size-sm: 0.875rem;
+}

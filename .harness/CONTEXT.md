@@ -77,32 +77,32 @@ Học viên chạy mentor qua `cline` TRONG TERMINAL của Cursor (KHÔNG phải
 (2) Nén context thì bảo học viên MỞ SESSION MỚI (đọc CONTEXT.md), đừng bấm Compact UI.
 (3) Không cần xóa cache/reinstall. Muốn dùng nút bấm/compact mượt thì học viên tự chuyển sang Chat panel IDE.
 
-## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi 2026-07-25 tối)
+## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi 2026-07-26)
 
-**Source of truth trạng thái:** `.harness/feature_list.json` (`current_focus` = `feat-0.4-design-system`). File này = nhật ký học; `progress.md` = log session; `session-handoff.md` = bàn giao agent.
+**Source of truth trạng thái:** `.harness/feature_list.json` (`current_focus` = `feat-0.4-design-system`).
 
-**Vừa xong buổi 2026-07-25 (GĐ0.4 — session 1):**
-- Scaffold `packages/ui`: peer+dev React 19, tsconfig **bundler** (không copy NodeNext), `pnpm typecheck` PASS.
-- Button Lớp 0 (`Button.tsx` + `index.ts` export).
-- Harness: quy tắc thuật ngữ `(Việt)`, cách dạy giải thích-trước, từ điển DS, roadmap styling mix CSS vars + CSS modules + Tailwind + Radix.
-- Lý thuyết đã giảng (chưa consolidate — học viên cần ôn lại đơn giản): monorepo DS scope, peer vs dev, source-only ui, Prisma Studio ↔ react-dom lockfile, Radix vs MUI, api không import ui.
-- **Chưa:** Storybook, tokens.css, Button styling, review Button từng dòng (bài 6).
+**Vừa xong buổi 2026-07-26 (GĐ0.4 — session 2):**
+- Tailwind v4 hybrid C: `globals.css` `@theme` tokens + Button variants (primary/secondary).
+- Storybook 10 (`storybook` + `@storybook/react-vite`; không dùng addon-essentials — gộp core).
+- Modal + `@radix-ui/react-dialog` + stories; `asChild` + Button trigger/close.
+- `css.d.ts`, `.vscode` ignore unknown Tailwind at-rules, `pnpm typecheck` PASS.
 
-**Bước tiếp buổi sau:** mở session → đọc CONTEXT → `./.harness/init.sh` → học viên chọn **một** mục ôn (A–E) hoặc thực hành **tokens Lớp 1** / Storybook sau khi hiểu bức tranh.
+**Chưa GĐ0.4:** Table, Form, layout, auth-guard FE.
+
+**Bước tiếp:** Table component hoặc Form — giải thích trước thực hành.
 
 **GĐ0.3 IAM — feat-0.3-iam: ✅ KHÉP (Mảng 1–4).**
 
-### GĐ0.4 Design System — quyết định styling (2026-07-25)
+### GĐ0.4 Design System — quyết định styling (cập nhật 2026-07-26)
 
-Học viên chốt: **mix A+B+C để học** — không chọn một framework duy nhất.
+Học viên chốt **C — Hybrid:** token = CSS vars trong Tailwind v4 `@theme`; component dùng utility class (`bg-primary`…). Gộp Lớp 1+3. **Skip CSS Modules (Lớp 2)** tạm thời.
 
 | Lớp | Công cụ | Học gì | Component minh họa |
 |-----|---------|--------|-------------------|
-| 0 | React thuần | package DS, peerDeps, props typing, export | **Button** (structure) |
-| 1 | **CSS custom properties** (`theme.css`) | design tokens — màu, spacing, radius, dark mode hook | Button + `data-variant` |
-| 2 | **CSS Modules** | scoped style, không global leak, `var(--token)` | Button `.module.css` |
-| 3 | **Tailwind** trong `@taskflow/ui` | utility, config extend tokens, DX khi scale | Button variants → Table |
-| 4 | **Radix** (headless — không CSS sẵn, chỉ behavior + a11y) | focus trap (bẫy focus), keyboard, `asChild` (ghép vào con) | **Modal/Dialog** (không Radix cho Button) |
+| 0 | React thuần | package DS, peerDeps, props typing, export | **Button** (structure) ✅ |
+| 1+3 | **Tailwind v4 `@theme`** + CSS vars | token → utility class | **Button** primary variant |
+| ~~2~~ | ~~CSS Modules~~ | skip tạm | — |
+| 4 | **Radix** (headless) | Modal/Dialog | sau Button styled |
 
 **Nguyên tắc:** App (`apps/web`) chỉ import `@taskflow/ui/*`. Radix/Tailwind là **implementation detail** (chi tiết triển khai nội bộ) bên trong package — giống shadcn nhưng do TaskFlow sở hữu.
 
@@ -114,7 +114,7 @@ Học viên chốt: **mix A+B+C để học** — không chọn một framework 
 | `packages/ui` | **bundler** | Component **browser** — sau này Next/Vite bundle; **không** copy config Node. |
 | | `lib`: DOM + DOM.Iterable | UI cần type DOM (`HTMLButtonElement`…). |
 
-**Tiến độ scaffold:** `packages/ui` peer+dev React 19, tsconfig **bundler**, Button Lớp 0, typecheck PASS. Lý thuyết DS buổi 1 xong một phần — học viên cần ôn đơn giản trước Storybook/tokens.
+**Tiến độ:** Button ✅ Tailwind tokens ✅ Storybook ✅ Modal/Radix ✅. Còn Table, Form, layout.
 
 ### 📘 AUDIT LOG (đã giảng 2026-07-23 tối — học viên THÔNG)
 
