@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2024",
-    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2024",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "strict": true,
@@ -12,5 +16,9 @@
     "noUnusedParameters": true,
     "jsx": "react-jsx"
   },
-  "include": ["src/**/*"]
+  "include": [
+    "src/**/*",
+    ".storybook/**/*",
+    "css.d.ts"
+  ]
 }

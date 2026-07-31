@@ -9,6 +9,7 @@
   "packageManager": "pnpm@9.15.0+sha512.76e2379760a4328ec4415815bcd6628dee727af3779aaa4c914e3944156c4299921a89f976381ee107d41f12cfa4b66681ca9c718f0668fa0831ed4c6d8ba56c",
   "scripts": {
     "dev": "pnpm --filter @taskflow/api dev",
+    "watch": "pnpm --filter @taskflow/shared exec tsc -p tsconfig.build.json --watch",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r exec tsc --noEmit",
     "format": "prettier --write .",

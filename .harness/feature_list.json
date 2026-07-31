@@ -112,8 +112,8 @@
       "name": "GĐ1(app) Project & Task (hoàn thiện + FE)",
       "description": "FE Next.js board/task, React Query, RHF+Zod, Tailwind, drag-drop, realtime board (WebSocket presence), offline (Zustand+IndexedDB), search/filter/pagination",
       "dependencies": ["feat-0.4-design-system"],
-      "status": "not-started",
-      "evidence": ""
+      "status": "in-progress",
+      "evidence": "2026-07-31: apps/web (@taskflow/web) scaffold+shell. Login RHF+loginSchema. shared build→dist/. BFF POST /api/auth/login (httpOnly cookie)+GET /api/tasks (cookie→Bearer). proxy.ts chặn /tasks. tasks page client fetch list — login→/tasks test PASS. Nợ GĐ9: bỏ BFF data routes prod same-domain. NEXT: React Query, register, task CRUD UI."
     },
     {
       "id": "feat-app2-time",

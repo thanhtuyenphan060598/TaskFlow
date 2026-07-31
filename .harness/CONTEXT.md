@@ -77,18 +77,60 @@ Học viên chạy mentor qua `cline` TRONG TERMINAL của Cursor (KHÔNG phải
 (2) Nén context thì bảo học viên MỞ SESSION MỚI (đọc CONTEXT.md), đừng bấm Compact UI.
 (3) Không cần xóa cache/reinstall. Muốn dùng nút bấm/compact mượt thì học viên tự chuyển sang Chat panel IDE.
 
-## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi 2026-07-26)
+## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi 2026-07-31)
 
-**Source of truth trạng thái:** `.harness/feature_list.json` (`current_focus` = `feat-app1-task`).
+**Source of truth trạng thái:** `.harness/feature_list.json` (`current_focus` = `feat-app1-task`, **in-progress**).
 
-**Vừa xong buổi 2026-07-26 (GĐ0.4 — KHÉP):**
-- Button, Modal+Radix, Table, FormField/Input/Label, Tailwind tokens, Storybook 10.
-- **Đã xóa** AuthGuard + AppLayout khỏi ui (học viên review — thuộc apps/web).
-- PR self-review checklist ghi CONTEXT.
+**Vừa xong buổi 2026-07-31 (GĐ1 app — auth + list):**
+- Login → cookie → `proxy.ts` → `/tasks` **test PASS**
+- BFF `GET /api/tasks` + tasks page list
+- Bài học React dev: Strict Mode, AbortController, error state sticky
 
-**Bước tiếp:** GĐ1 `apps/web` — Next.js dùng `@taskflow/ui`, React Query, RHF+Zod.
+**Bước tiếp:**
+1. React Query cho tasks
+2. Register page
+3. Task CRUD UI
 
-**GĐ0.3 IAM — feat-0.3-iam: ✅ KHÉP (Mảng 1–4).**
+**Đã xong trước đó (2026-07-28/29):**
+- `apps/web` scaffold, shell `(dashboard)` / `(auth)`, login RHF + `loginSchema`.
+- `packages/shared` **build → `dist/`** — api NodeNext + Next đều consume JS thật.
+- Auth **httpOnly cookie** (không localStorage): BFF `POST /api/auth/login` trên Next `:3000`.
+- `proxy.ts` (Next 16) bảo vệ page `/tasks`… — đọc cookie server-side.
+- Fastify `jwtVerify()` vẫn **Bearer only** — BFF đọc cookie rồi gắn `Authorization` khi gọi `:3001`.
+
+**Bước tiếp buổi sau (một file một lúc):**
+1. React Query — `useQuery` cho `/api/tasks`
+2. Register page + BFF `/api/auth/register`
+3. Task create form
+
+~~1. `app/api/tasks/route.ts`~~ ✅  
+~~2. `tasks/page.tsx` fetch list~~ ✅
+
+**GĐ0.4 + GĐ0.3 IAM:** ✅ KHÉP.
+
+### Nợ kỹ thuật GĐ1-web (học viên chốt 2026-07-29 — trả GĐ9 deploy)
+
+| Nợ | Lý do dev | Trả khi nào |
+|----|-----------|-------------|
+| **BFF Route Handlers** (`/api/auth/login`, `/api/tasks`…) | Dev tách `:3000` / `:3001` — cookie httpOnly không cross-origin | **GĐ9:** nginx cùng domain `app.com` — `/api/v1` → Fastify; client `fetch("/api/v1/tasks", { credentials: "include" })`; **xóa** proxy data routes (giữ login BFF tùy chọn) |
+| **BFF = cost prod** | +1 hop Next, không cần nếu cùng domain | Documented — không mang nguyên pattern dev lên prod |
+| **api chỉ Bearer** | `@fastify/jwt` default | Prod có thể thêm `@fastify/cookie` đọc cookie trực tiếp — hoãn |
+| **`packages/config`** | Học viên từ chối over-engineer | Mỗi workspace giữ `tsconfig.json` riêng |
+
+**Quyết định học viên:** Pattern **(A)** — học xong BFF tasks proxy GĐ1, ghi nợ refactor prod.
+
+### Auth dev — mental model (3 hop login)
+
+```
+Browser ──POST /api/auth/login──► Next Route Handler (:3000)
+Next (server) ──POST /api/v1/auth/login──► Fastify (:3001)
+Next Set-Cookie httpOnly trên :3000 → proxy.ts cho /tasks
+Client data calls GĐ1: fetch("/api/...") same-origin; Route Handler gắn Bearer → Fastify
+```
+
+**Cookie domain:** cookie `:3000` **không** tự gửi sang `:3001` (khác origin) — không phải vì httpOnly.
+
+**Convention Next API routes:** `app/api/auth/login/route.ts` → `POST /api/auth/login` — **không** nhét `route.ts` cạnh `page.tsx` trong `(auth)/login/`.
 
 ### GĐ0.4 Design System — quyết định styling (cập nhật 2026-07-26)
 

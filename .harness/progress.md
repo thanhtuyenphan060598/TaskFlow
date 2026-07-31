@@ -2,31 +2,38 @@
 
 ## Current State
 
-**Last Updated:** 2026-07-26 (toi)
-**Active Feature:** `feat-0.4-design-system` **DONE** — next: `feat-app1-task`
-**GĐ0.1 + GĐ0.2 + GĐ0.3:** DONE
+**Last Updated:** 2026-07-31 (toi)
+**Active Feature:** `feat-app1-task` **in-progress**
+**GĐ0.1 → GĐ0.4:** DONE
 
-## Session 2026-07-26 — GĐ0.4 Design System (session 2)
+## Session 2026-07-31 — GĐ1(app) auth + task list (KHÉP buổi này)
 
-- [x] Tailwind v4 hybrid C — `@theme` tokens in `globals.css`
-- [x] Button primary/secondary + className merge default `""`
-- [x] Storybook 10 + Button/Modal stories
-- [x] Modal + `@radix-ui/react-dialog` + Portal/Content/Close structure
-- [x] `css.d.ts`, `.vscode` css lint, typecheck PASS
-- [x] Table, FormField/Input/Label, AppLayout + stories
-- [x] AuthGuard + AppLayout removed from ui (app shell → apps/web GĐ1)
-- [x] GĐ0.4 KHÉP (mentor implement phần còn lại 2026-07-26)
+- [x] BFF `GET /api/tasks/route.ts` — cookie → Bearer → Fastify
+- [x] `tasks/page.tsx` — client fetch `/api/tasks`, render list
+- [x] E2E test: login seed user → redirect `/tasks` → list hiện PASS
+- [x] Bài học: Strict Mode double fetch dev; AbortController = cancel not dedupe; error state sticky vs setTasks
+- [ ] **NEXT:** React Query, register page, task CRUD UI
 
-## Session 2026-07-25 — GĐ0.4 (session 1)
+## Session 2026-07-28/29 — GĐ1(app) apps/web (auth nền)
 
-- [x] Scaffold `packages/ui`, Button L0, harness rules
+- [x] Scaffold `@taskflow/web`, shell `(dashboard)`/`(auth)`
+- [x] Login RHF + `loginSchema`; shared `dist/` build
+- [x] BFF `POST /api/auth/login`, httpOnly cookie, `proxy.ts`
+- [x] `@fastify/cors` api; `API_URL` server-only
+- [x] Nợ GĐ9 BFF prod documented in CONTEXT
+
+## Session 2026-07-26 — GĐ0.4 Design System (KHÉP)
+
+- [x] Tailwind v4, Button/Modal/Table/Form, Storybook 10
 
 ## What's Next
 
-1. **feat-app1-task** — apps/web Next.js + board/task FE
-2. Optional IAM debt: GET /audit, org repo
+1. React Query wrap `/api/tasks`
+2. Register page + BFF (pattern giống login)
+3. Task create/edit UI
 
 ## Notes
 
-- Storybook 10: không cài `@storybook/addon-essentials` (merged vào core từ v9)
-- `pnpm --filter @taskflow/ui storybook` — port 6006
+- Dev Strict Mode: useEffect fetch 2 lần — prod 1 lần
+- AbortController: ignore `AbortError` in catch; không dùng để chống duplicate
+- `./.harness/init.sh` + `pnpm --filter @taskflow/shared build` trước session mới

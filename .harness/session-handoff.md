@@ -1,21 +1,34 @@
-# Session Handoff
+# Session Handoff — GĐ1 apps/web (2026-07-31)
 
-> Cập nhật: **2026-07-26** — GĐ0.4 DONE.
-
-## Current Objective
-
-- **feat-0.4-design-system:** DONE
-- **Next:** `feat-app1-task` — apps/web (auth guard lives here, NOT ui)
-
-## Boundary rule (2026-07-26)
-
-- `@taskflow/ui` = widgets only (Button, Modal, Table, Form fields)
-- App layout shell + auth = `apps/web`
-
-## Dev commands
+## Mở session mới
 
 ```bash
-./.harness/init.sh
-pnpm typecheck
-pnpm --filter @taskflow/ui storybook
+cd /d/TaskFlow && ./.harness/init.sh
+pnpm --filter @taskflow/shared build
+pnpm dev                              # api :3001
+pnpm --filter @taskflow/web dev       # web :3000
 ```
+
+Đọc: `.harness/CONTEXT.md` mục **⏸️ ĐIỂM DỪNG**.
+
+## Đang làm
+
+`feat-app1-task` — in-progress
+
+## Xong buổi này
+
+- Full auth flow: login BFF + cookie + proxy + tasks BFF + list UI
+- E2E test PASS
+- shared `dist/` build, api CORS
+
+## Buổi sau — ONE step
+
+React Query wrap `GET /api/tasks` (giải thích trước, một file).
+
+## Nợ GĐ9
+
+Dev BFF → prod nginx same domain → bỏ data proxy routes (CONTEXT).
+
+## Seed login
+
+`owner@taskflow.dev` / `password123`
