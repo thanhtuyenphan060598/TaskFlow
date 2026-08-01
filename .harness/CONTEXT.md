@@ -77,19 +77,23 @@ Học viên chạy mentor qua `cline` TRONG TERMINAL của Cursor (KHÔNG phải
 (2) Nén context thì bảo học viên MỞ SESSION MỚI (đọc CONTEXT.md), đừng bấm Compact UI.
 (3) Không cần xóa cache/reinstall. Muốn dùng nút bấm/compact mượt thì học viên tự chuyển sang Chat panel IDE.
 
-## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi 2026-07-31)
+## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi 2026-08-01)
 
 **Source of truth trạng thái:** `.harness/feature_list.json` (`current_focus` = `feat-app1-task`, **in-progress**).
 
-**Vừa xong buổi 2026-07-31 (GĐ1 app — auth + list):**
+**Vừa xong buổi 2026-08-01 (GĐ1 app — React Query):**
+- `app/providers.tsx` (`QueryClientProvider`) mount trong root `layout.tsx`
+- `tasks/page.tsx` chuyển sang `useQuery({ queryKey: ["tasks"], queryFn })`, bỏ `useEffect`/`useState`/`AbortController` thủ công
+- Verify: `tsc --noEmit` pass; browser test login → `/tasks` list render, network chỉ 1 GET `/api/tasks`, console sạch
+
+**Bước tiếp:**
+1. Register page + BFF `/api/auth/register`
+2. Task CRUD UI
+
+**Đã xong trước đó (2026-07-31, GĐ1 app — auth + list):**
 - Login → cookie → `proxy.ts` → `/tasks` **test PASS**
 - BFF `GET /api/tasks` + tasks page list
 - Bài học React dev: Strict Mode, AbortController, error state sticky
-
-**Bước tiếp:**
-1. React Query cho tasks
-2. Register page
-3. Task CRUD UI
 
 **Đã xong trước đó (2026-07-28/29):**
 - `apps/web` scaffold, shell `(dashboard)` / `(auth)`, login RHF + `loginSchema`.
@@ -99,12 +103,12 @@ Học viên chạy mentor qua `cline` TRONG TERMINAL của Cursor (KHÔNG phải
 - Fastify `jwtVerify()` vẫn **Bearer only** — BFF đọc cookie rồi gắn `Authorization` khi gọi `:3001`.
 
 **Bước tiếp buổi sau (một file một lúc):**
-1. React Query — `useQuery` cho `/api/tasks`
-2. Register page + BFF `/api/auth/register`
-3. Task create form
+1. Register page + BFF `/api/auth/register`
+2. Task create form
 
 ~~1. `app/api/tasks/route.ts`~~ ✅  
-~~2. `tasks/page.tsx` fetch list~~ ✅
+~~2. `tasks/page.tsx` fetch list~~ ✅  
+~~3. React Query — `useQuery` cho `/api/tasks`~~ ✅
 
 **GĐ0.4 + GĐ0.3 IAM:** ✅ KHÉP.
 

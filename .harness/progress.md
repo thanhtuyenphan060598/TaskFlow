@@ -2,9 +2,17 @@
 
 ## Current State
 
-**Last Updated:** 2026-07-31 (toi)
+**Last Updated:** 2026-08-01
 **Active Feature:** `feat-app1-task` **in-progress**
 **GĐ0.1 → GĐ0.4:** DONE
+
+## Session 2026-08-01 — GĐ1(app) React Query cho tasks (KHÉP buổi này)
+
+- [x] Cài `@tanstack/react-query` cho `@taskflow/web`
+- [x] `app/providers.tsx` — `QueryClientProvider`, mount trong root `layout.tsx`
+- [x] `tasks/page.tsx` — thay `useEffect`/`useState`/`AbortController` bằng `useQuery({ queryKey: ["tasks"], queryFn })`
+- [x] Verify: `tsc --noEmit` pass; browser test login → `/tasks` → list render đúng, network chỉ 1 GET `/api/tasks`, console sạch
+- [ ] **NEXT:** Register page + BFF `/api/auth/register`, task CRUD UI
 
 ## Session 2026-07-31 — GĐ1(app) auth + task list (KHÉP buổi này)
 
@@ -28,9 +36,8 @@
 
 ## What's Next
 
-1. React Query wrap `/api/tasks`
-2. Register page + BFF (pattern giống login)
-3. Task create/edit UI
+1. Register page + BFF (pattern giống login)
+2. Task create/edit UI
 
 ## Notes
 

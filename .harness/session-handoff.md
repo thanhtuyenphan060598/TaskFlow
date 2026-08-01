@@ -1,4 +1,4 @@
-# Session Handoff — GĐ1 apps/web (2026-07-31)
+# Session Handoff — GĐ1 apps/web (2026-08-01)
 
 ## Mở session mới
 
@@ -17,13 +17,13 @@ pnpm --filter @taskflow/web dev       # web :3000
 
 ## Xong buổi này
 
-- Full auth flow: login BFF + cookie + proxy + tasks BFF + list UI
-- E2E test PASS
-- shared `dist/` build, api CORS
+- React Query wrap `GET /api/tasks`: `app/providers.tsx` (`QueryClientProvider`) + `tasks/page.tsx` dùng `useQuery`
+- Bỏ `useEffect`/`useState`/`AbortController` thủ công
+- Verify: typecheck pass, browser test login → `/tasks` list render, network 1 GET, console sạch
 
 ## Buổi sau — ONE step
 
-React Query wrap `GET /api/tasks` (giải thích trước, một file).
+Register page + BFF `POST /api/auth/register` (pattern giống login: RHF+Zod form → route handler → Fastify).
 
 ## Nợ GĐ9
 
