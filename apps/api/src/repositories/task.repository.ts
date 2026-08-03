@@ -3,20 +3,20 @@ import type { Prisma } from "../generated/prisma/client.js";
 
 export const taskRepository = {
   //Create a new task row
-  create(data: Prisma.TaskCreateInput) {
-    return prisma.task.create({ data, include: { board: { include: { project: { include: { workspace: true } } } } } });
+  create(data: Prisma.TaskCreateInput,db: Prisma.TransactionClient | typeof prisma = prisma) {
+    return db.task.create({ data, include: { board: { include: { project: { include: { workspace: true } } } } } });
   },
   //Find one task by id, or null if not found
   findById(taskId: string) {
     return prisma.task.findUnique({ where: { id: taskId } });
   },
   //Update a task by id with partial data
-  update(taskId: string, data: Prisma.TaskUpdateInput) {
-    return prisma.task.update({ where: { id: taskId }, data, include: { board: { include: { project: { include: { workspace: true } } } } } });
+  update(taskId: string, data: Prisma.TaskUpdateInput,db: Prisma.TransactionClient | typeof prisma = prisma) {
+    return db.task.update({ where: { id: taskId }, data, include: { board: { include: { project: { include: { workspace: true } } } } } });
   },
   //Delete a task by id
-  delete(taskId: string) {
-    return prisma.task.delete({ where: { id: taskId }, include: { board: { include: { project: { include: { workspace: true } } } } } });
+  delete(taskId: string,db: Prisma.TransactionClient | typeof prisma = prisma) {
+    return db.task.delete({ where: { id: taskId }, include: { board: { include: { project: { include: { workspace: true } } } } } });
   },
 
   //Find the authorId and workspaceId of a task by id

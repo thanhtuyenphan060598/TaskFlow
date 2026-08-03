@@ -2,45 +2,35 @@
 
 ## Current State
 
-**Last Updated:** 2026-08-03 (toi — harness handoff sau khi mentor CLI đứt)
+**Last Updated:** 2026-08-03 (toi muon — stop, mai hoc tiep)
 **Active Feature:** `feat-app1-task` **in-progress**
 **GĐ0.1 → GĐ0.4:** DONE
 
-## Session 2026-08-03 tối — Task Create: BFF POST + WIP form (ĐỨT giữa validate FE)
+## Session 2026-08-03 tối muộn — Create Task form + transaction (STOP)
 
-- [x] Chốt scope: **hardcode `boardId`** seed Board A (`e0dd4eb4-f55b-465d-a63f-f1ad11713bbe`) — nợ Board/Project/Workspace UI sau (tránh orphan / scope creep)
-- [x] Form Create Task đặt **cùng trang `/tasks`** (không modal/route mới)
-- [x] BFF `POST` trong `apps/web/src/app/api/tasks/route.ts` — cookie→Bearer, forward body, forward `res.status` (201) — mentor review PASS
-- [x] Lý thuyết: `useMutation` + `invalidateQueries`; `proxy.ts` (page UX) vs check cookie trong Route Handler (data auth)
-- [ ] **WIP** `tasks/page.tsx`: có `BOARD_ID`, hàm `createTask` typed `CreateTaskSchema`, import schema/`useMutation` — **chưa** form UI, chưa `useMutation` hook, chưa RHF/`zodResolver`, chưa invalidate
-- [ ] **Checkpoint mở (mentor chết token/auth trước khi trả lời):**
-  1. Học viên: "tao đã validation bằng schema rồi" — cần review: type import ≠ runtime Zod
-  2. Chưa chốt RHF vs `useState` cho `title`
-  3. Chưa chốt `zodResolver(createTaskSchema)` vs chỉ dựa BE 400
-- [ ] Browser test create task — chưa chạy
-- [ ] **NEXT mentor:** review WIP → chốt FE validate → wire form + mutation → test
+- [x] Checkpoint: type ≠ Zod runtime; chốt RHF + `zodResolver(createTaskSchema)`
+- [x] Form Create Task: `useForm` + `defaultValues.boardId` + `useMutation` + `invalidateQueries` + reset
+- [x] Fix TS: `CreateTaskInput` / `CreateTaskSchema` + `useForm<Input, unknown, Output>` (do `z.coerce.date()`)
+- [x] Root cause 500 sau create: `AuditLog` table missing → migrate `20260723125820_add_audit_log` applied (status up to date)
+- [x] A: `$transaction` wrap create/update/delete + audit; repo `db` optional chỉ task+audit
+- [x] Lý thuyết: partial success; orchestrator cho cross-service tx; không mở `db` mọi repo
+- [ ] **B (NEXT):** error-handler/FE surface lỗi rõ hơn (đừng nuốt Prisma thành `"Internal Server Error"` chung)
+- [ ] Browser retest create → 201 (làm đầu buổi sau)
+- [ ] Edit / Delete UI
 
-## Session 2026-08-03 — GĐ1(app) React Query + Register
+## Session 2026-08-03 — React Query + Register + BFF POST
 
-- [x] `providers.tsx` — `QueryClient` + lazy `useState`
-- [x] `tasks/page.tsx` — `useQuery` list
-- [x] Browser: login → `/tasks` list PASS
-- [x] Register BFF + page; browser 201 + 409 PASS
-- [x] Bài học: `initialData: []` che loading; optional chaining
-
-## Session 2026-07-31 — GĐ1(app) auth + task list
-
-- [x] BFF GET tasks, list UI, E2E login→list PASS
+- [x] providers + useQuery list; Register; BFF POST tasks
 
 ## What's Next
 
-1. Review / hoàn thiện Create Task form (`zodResolver` + `useMutation` + invalidate)
-2. Browser test create
-3. Edit / Delete UI sau
+1. Verify create task 201 in browser
+2. B — better 500/error messages (API + FE)
+3. Edit / Delete UI
 
 ## Notes / Nợ
 
-- Hardcode `BOARD_ID` — trả khi có Board list API/UI
-- Register `onSubmit` thiếu `setFormError(null)` đầu hàm (nhỏ)
-- Nợ GĐ9: BFF data routes → nginx same-domain
+- Hardcode `BOARD_ID`
+- Register `setFormError(null)` nhỏ
+- Nợ GĐ9 BFF
 - `./.harness/init.sh` + `pnpm --filter @taskflow/shared build` trước session mới

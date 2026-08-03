@@ -1,47 +1,33 @@
-# Session Handoff — GĐ1 Create Task (2026-08-03 tối)
+# Session Handoff — 2026-08-03 tối muộn
 
 ## Mở session mới
 
 ```bash
 cd /Users/ecbdeveloper/Documents/TaskFlow && ./.harness/init.sh
 pnpm --filter @taskflow/shared build
-pnpm --filter @taskflow/api dev       # :3001
-pnpm --filter @taskflow/web dev       # :3000
+pnpm --filter @taskflow/api dev
+pnpm --filter @taskflow/web dev
 ```
 
-Đọc **đầu tiên:** `.harness/CONTEXT.md` mục **⏸️ ĐIỂM DỪNG HIỆN TẠI**.
+Đọc: `.harness/CONTEXT.md` mục **⏸️ ĐIỂM DỪNG**.
 
-Mentor: xưng **tao**, gọi học viên **mày**. Chỉ hướng dẫn — học viên tự gõ code. Không `ask_question` nút bấm.
+Mentor: **tao/mày**; học viên tự gõ code; hỏi bằng chữ.
 
 ## Đang làm
 
-`feat-app1-task` — **in-progress**  
-Đang dừng: **FE validate createTask với schema** (WIP, mentor CLI đứt).
+`feat-app1-task` — Create Task gần xong.
 
-## Xong buổi này
+## Xong
 
-- Hardcode `BOARD_ID` = `e0dd4eb4-f55b-465d-a63f-f1ad11713bbe` (seed Board A)
-- BFF `POST /api/tasks` (forward status 201)
-- Lý thuyết `useMutation` / `invalidateQueries` / proxy vs API auth
+- FE form RHF + full `createTaskSchema` + mutation/invalidate
+- `CreateTaskInput` cho coerce dueDate
+- Migrate AuditLog; `$transaction` task+audit (create/update/delete)
 
-## WIP / chưa xong
+## Buổi sau — ONE step đầu
 
-`apps/web/src/app/(dashboard)/tasks/page.tsx`:
+1. Browser verify create → **201**
+2. Rồi **B:** surface lỗi API/FE rõ (error-handler đang trả `"Internal Server Error"` chung)
 
-- Có hàm `createTask` + import schema — **chưa** form, **chưa** `useMutation` trong component
-- Học viên nói đã validate schema — **cần review:** type ≠ `zodResolver` runtime
-
-## Buổi sau — ONE step
-
-1. Review WIP với học viên → chốt RHF+`zodResolver(createTaskSchema)` (hoặc useState tạm)
-2. Wire form + mutation + `invalidateQueries`
-3. Browser test create task
-
-## Seed login
+## Seed
 
 `owner@taskflow.dev` / `password123`
-
-## Nợ
-
-- Board/Project/Workspace UI (thay hardcode boardId)
-- GĐ9: BFF data routes → nginx same-domain

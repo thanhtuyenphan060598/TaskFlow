@@ -77,77 +77,49 @@ Học viên chạy mentor qua `cline` TRONG TERMINAL của Cursor (KHÔNG phải
 (2) Nén context thì bảo học viên MỞ SESSION MỚI (đọc CONTEXT.md), đừng bấm Compact UI.
 (3) Không cần xóa cache/reinstall. Muốn dùng nút bấm/compact mượt thì học viên tự chuyển sang Chat panel IDE.
 
-## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật 2026-08-03 tối)
+## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật 2026-08-03 tối muộn, dừng buổi)
 
 **Source of truth trạng thái:** `.harness/feature_list.json` (`current_focus` = `feat-app1-task`, **in-progress**).
 
-**⚠️ Session mentor CLI đứt giữa chừng** (auth/token 401 sau khi đổi model) — học viên bảo "tao đã validation bằng schema rồi" nhưng **chưa review xong**. Mentor sau **phải đọc code hiện tại** trước khi giảng tiếp.
-
 ### Đang dừng đúng chỗ nào
 
-**Feature:** Create Task UI trên `/tasks` — bước **FE validate bằng `createTaskSchema`** chưa chốt / chưa wire xong.
+**Feature:** Create Task — form FE đã wire; BE transaction create+audit đã làm. **Chưa xong:** B (FE/API surface lỗi rõ) + browser verify 201 sau migrate + Edit/Delete UI.
 
 | Bước | Status | Chi tiết |
 |------|--------|----------|
-| Quyết định hardcode `boardId` (hướng 1) | ✅ | Tránh scope creep Board/Project/Workspace CRUD |
-| Seed Board A UUID | ✅ | `e0dd4eb4-f55b-465d-a63f-f1ad11713bbe` |
-| BFF `POST /api/tasks` | ✅ | Forward cookie→Bearer + body; forward đúng `res.status` (201) |
-| Lý thuyết `useMutation` + `invalidateQueries` | ✅ giảng | Học viên nói "đã hiểu" |
-| Checklist form Create Task | ✅ đưa | Chưa implement hết |
-| Chốt RHF vs `useState` cho `title` | ❌ mở | Mentor hỏi — học viên **chưa trả lời**, nhảy sang hỏi schema |
-| FE `zodResolver(createTaskSchema)`? | ❌ mở / WIP | Mentor hỏi — học viên: "đã validation bằng schema rồi" |
-| Form JSX + `useMutation` hook + invalidate | ❌ chưa | Code WIP — xem bên dưới |
-| Browser test create task | ❌ chưa | |
+| Hardcode `boardId` Board A | ✅ | `e0dd4eb4-f55b-465d-a63f-f1ad11713bbe` |
+| BFF `POST /api/tasks` | ✅ | Forward Bearer + status 201 |
+| Chốt RHF + `zodResolver(createTaskSchema)` | ✅ | Học viên từ chối useState tạm |
+| Type ≠ Zod runtime | ✅ hiểu | |
+| Form + `useMutation` + `invalidateQueries` + reset | ✅ | `tasks/page.tsx` |
+| `CreateTaskInput` / `CreateTaskSchema` (coerce dueDate) | ✅ | shared schema export; `useForm<Input, unknown, Output>` |
+| Bug 500 sau create (partial success) | ✅ chẩn đoán | Task commit rồi `AuditLog` fail — bảng chưa migrate |
+| `pnpm prisma:migrate` (`add_audit_log`) | ✅ | `migrate status` = up to date |
+| `$transaction` create/update/delete + audit | ✅ code | Repo `db` optional chỉ task+audit; mentor review logic PASS |
+| **B — surface lỗi Prisma/FE rõ** | ❌ NEXT | `error-handler` nuốt 500 thành `"Internal Server Error"` |
+| Browser retest create → 201 + list | ⚠️ chưa confirm session này | Làm đầu buổi sau |
+| Edit / Delete UI | ❌ chưa | |
 
-### Code hiện tại (`tasks/page.tsx`) — mentor sau REVIEW trước
+### Quyết định / bài học buổi này
 
-File đang **WIP nửa chừng** (học viên tự gõ):
+1. Giữ **full `createTaskSchema`** trên form (không `.pick`) — chấp nhận `CreateTaskInput` vì hardcode + chưa có field dueDate trên UI.
+2. **`z.coerce.date()`** = ép input (string JSON…) → `Date`; khác `.nullable()/.optional()`. Input ≠ output → RHF cần 3 generic.
+3. Partial success nguy hiểm: DB đổi + HTTP 500 → duplicate nếu user retry. Fix atomic: `prisma.$transaction` + truyền `tx` xuống repo.
+4. **Không** thêm `db` cho mọi repository — chỉ method ghi tham gia transaction.
+5. Cross-service (Board+Project): **orchestrator/use-case** mở 1 tx, truyền `tx` vào service/repo — không để mỗi service tự `$transaction` riêng.
+6. Chọn học **C** (A transaction + B lỗi rõ) — A xong, B để mai.
 
-- Có: `BOARD_ID` hardcode; hàm `createTask(task: CreateTaskSchema)` — `JSON.stringify({ ...task, boardId: BOARD_ID })`; import `createTaskSchema` / `CreateTaskSchema` / `useMutation`
-- **Chưa có:** form UI; `useForm` / `zodResolver`; gọi `useMutation({...})` trong component; `useQueryClient` + `invalidateQueries`; submit handler
-- Import `createTaskSchema` + type `CreateTaskSchema` **≠** runtime validate. TypeScript type chỉ check lúc compile; `zodResolver` / `.parse()` mới chặn `title=""` trước khi fetch. Mentor cần **checkpoint** điểm này với học viên (có thể học viên nhầm type = validate).
+### Bước tiếp buổi sau (một việc một lúc)
 
-### Quyết định đã chốt buổi này
+1. Browser: create task → **201**, list cập nhật, title rỗng bị FE chặn
+2. **B:** cải thiện `error-handler` / FE hiện message hữu ích (dev) khi 500 — đừng chỉ `"Internal Server Error"` vô nghĩa
+3. Edit / Delete task UI
 
-1. **Hardcode `boardId`** lấy seed Board A — nợ kỹ thuật: Board/Project/Workspace management UI sau (không làm giữa Task CRUD). Chuỗi phụ thuộc: Workspace → Project → Board → Task.
-2. **Form Create Task nằm cùng trang `/tasks`** — không modal / route mới.
-3. Payload tối thiểu hợp lệ theo schema: `{ title, boardId }` — 2 field required; còn lại `.optional()`. BE Zod sẽ pass → 201 nếu title không rỗng.
+### Đã xong trước đó cùng ngày
 
-### Bài học đã giảng (giữ cho mentor sau)
+- Register BFF+page PASS; React Query list PASS; BFF POST; mentor resume từ checkpoint schema
 
-- **`useQuery` vs `useMutation`:** query = đọc, tự chạy khi mount; mutation = hành động ghi, chỉ chạy khi `mutate(...)`; `onSuccess` → `invalidateQueries({ queryKey: ["tasks"] })` để list refetch.
-- **`proxy.ts` vs check trong Route Handler:** middleware (`matcher` chỉ page `/tasks`…) = UX redirect; mỗi `/api/...` route **tự** check cookie → 401. `curl` thẳng `/api/tasks` **bypass** proxy — đúng by design, không thừa.
-- **BFF forward status:** success cũng phải `NextResponse.json(..., { status: res.status })` — không để mặc định 200 khi Fastify trả 201.
-- **Never trust the client:** BE luôn validate; FE validate (zodResolver) = UX bắt lỗi sớm, không thay thế BE.
-
-### Checkpoint mở — mentor sau hỏi lại bằng CHỮ
-
-1. Code hiện tại: type `CreateTaskSchema` có đủ thay `zodResolver(createTaskSchema)` không? (đáp án mong đợi: **không** — compile-time ≠ runtime)
-2. Form `title`: dùng **RHF + zodResolver** (nhất quán Login/Register) hay **`useState`** tạm?
-3. Nếu RHF + schema: `boardId` set qua `defaultValues` / hidden field / merge lúc submit (đừng bắt user gõ UUID).
-
-**Bước tiếp (một việc một lúc):**
-1. Review WIP `tasks/page.tsx` với học viên → chốt validate FE
-2. Wire form + `useMutation` + `invalidateQueries`
-3. Browser test: tạo task → list cập nhật, title rỗng bị chặn (FE và/hoặc BE 400)
-4. Sau đó mới Edit/Delete
-
-### Vừa xong trước đó cùng ngày (chiều — Register)
-
-- BFF + page Register; browser PASS 201 + 409
-- Nợ nhỏ: `onSubmit` thiếu `setFormError(null)` đầu hàm (không critical)
-
-### Vừa xong sáng 2026-08-03 — React Query wrap list
-
-- `providers.tsx` + `useQuery` list; browser PASS
-
-### Vừa xong 2026-07-31 — auth + list
-
-- Login → cookie → `proxy.ts` → `/tasks` PASS; BFF GET
-
-**Đã xong nền (2026-07-28/29):** apps/web scaffold, login BFF cookie, shared `dist/`, Fastify Bearer-only.
-
-~~1. React Query list~~ ✅ · ~~2. Register~~ ✅ · ~~3. BFF POST tasks~~ ✅ · **4. Create Task form (validate FE)** ← đang dừng
+~~Create Task form + tx~~ gần xong · **B error surface + verify 201** ← dừng · Edit/Delete sau
 
 **GĐ0.4 + GĐ0.3 IAM:** ✅ KHÉP.
 

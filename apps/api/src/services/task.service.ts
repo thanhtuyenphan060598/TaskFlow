@@ -1,4 +1,5 @@
 import { taskRepository } from "../repositories/task.repository.js";
+import { prisma } from "../lib/prisma.js";
 import type { Prisma } from "../generated/prisma/client.js";
 import { permissionService } from "./permission.service.js";
 import type { CreateTaskSchema, UpdateTaskSchema } from "@taskflow/shared";
@@ -17,21 +18,26 @@ export const taskService = {
       priority: data.priority
     };
 
-    const task = await taskRepository.create(input);
-    const workspaceId = task?.board.project.workspaceId;
-    if (task && workspaceId) {
-      await auditRepository.log({
-        userId: authorId,
-        action: "CREATE",
-        resourceType: "Task",
-        resourceId: task.id,
-        workspaceId: workspaceId,
-        metadata: {
-          title: task.title,
-        }
-      });
-    }
-    return task;
+    return prisma.$transaction(async (tx) => {
+      const task = await taskRepository.create(input, tx);
+      const workspaceId = task?.board.project.workspaceId;
+      if (task && workspaceId) {
+        await auditRepository.log(
+          {
+            userId: authorId,
+            action: "CREATE",
+            resourceType: "Task",
+            resourceId: task.id,
+            workspaceId: workspaceId,
+            metadata: {
+              title: task.title
+            }
+          },
+          tx
+        );
+      }
+      return task;
+    });
   },
 
   getAll(userId: string) {
@@ -44,8 +50,14 @@ export const taskService = {
   },
 
   async update(taskId: string, data: UpdateTaskSchema, userId: string) {
-    const { board: { project: { workspaceId } } } = await permissionService.assertCanModifyTask(taskId, userId);
-    const task = await taskRepository.update(taskId, data);
+    const {
+      board: {
+        project: { workspaceId }
+      }
+    } = await permissionService.assertCanModifyTask(taskId, userId);
+
+    return prisma.$transaction(async (tx) => {
+    const task = await taskRepository.update(taskId, data, tx);
     if (task && workspaceId) {
       await auditRepository.log({
         userId: userId,
@@ -54,16 +66,22 @@ export const taskService = {
         resourceId: task.id,
         workspaceId: workspaceId,
         metadata: {
-          title: task.title,
+          title: task.title
         }
-      });
+      },tx);
     }
     return task;
+    });
   },
 
   async delete(taskId: string, userId: string) {
-    const { board: { project: { workspaceId } } } = await permissionService.assertCanModifyTask(taskId, userId);
-    const task = await taskRepository.delete(taskId);
+    const {
+      board: {
+        project: { workspaceId }
+      }
+    } = await permissionService.assertCanModifyTask(taskId, userId);
+    return prisma.$transaction(async (tx) => {
+    const task = await taskRepository.delete(taskId, tx);
     if (task && workspaceId) {
       await auditRepository.log({
         userId: userId,
@@ -72,10 +90,11 @@ export const taskService = {
         resourceId: task.id,
         workspaceId: workspaceId,
         metadata: {
-          title: task.title,
+          title: task.title
         }
-      });
+      },tx);
     }
     return task;
+    });
   }
 };
