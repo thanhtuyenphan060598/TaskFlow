@@ -113,7 +113,7 @@
       "description": "FE Next.js board/task, React Query, RHF+Zod, Tailwind, drag-drop, realtime board (WebSocket presence), offline (Zustand+IndexedDB), search/filter/pagination",
       "dependencies": ["feat-0.4-design-system"],
       "status": "in-progress",
-      "evidence": "2026-07-31: apps/web (@taskflow/web) scaffold+shell. Login RHF+loginSchema. shared build→dist/. BFF POST /api/auth/login (httpOnly cookie)+GET /api/tasks (cookie→Bearer). proxy.ts chặn /tasks. tasks page client fetch list — login→/tasks test PASS. Nợ GĐ9: bỏ BFF data routes prod same-domain. NEXT: React Query, register, task CRUD UI."
+      "evidence": "2026-07-31: apps/web scaffold+shell; login BFF cookie; GET /api/tasks; list PASS. 2026-08-03 sáng: providers.tsx QueryClient; useQuery list PASS. 2026-08-03 chiều: Register BFF+page PASS 201/409. 2026-08-03 tối: chốt hardcode boardId seed Board A e0dd4eb4-f55b-465d-a63f-f1ad11713bbe (nợ Board/Project UI sau); BFF POST /api/tasks forward Bearer+body+status 201 PASS; giảng useMutation+invalidateQueries + proxy vs route auth. WIP tasks/page.tsx: createTask typed CreateTaskSchema+BOARD_ID — CHƯA form/useMutation hook/zodResolver; checkpoint mở (type≠runtime validate; RHF vs useState). Mentor CLI đứt (401 auth) trước khi chốt. NEXT: review WIP→chốt FE zodResolver(createTaskSchema)→wire form+mutation→browser test create. Nợ GĐ9: bỏ BFF data routes prod same-domain."
     },
     {
       "id": "feat-app2-time",

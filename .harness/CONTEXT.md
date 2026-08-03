@@ -77,34 +77,77 @@ Học viên chạy mentor qua `cline` TRONG TERMINAL của Cursor (KHÔNG phải
 (2) Nén context thì bảo học viên MỞ SESSION MỚI (đọc CONTEXT.md), đừng bấm Compact UI.
 (3) Không cần xóa cache/reinstall. Muốn dùng nút bấm/compact mượt thì học viên tự chuyển sang Chat panel IDE.
 
-## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật cuối buổi 2026-07-31)
+## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật 2026-08-03 tối)
 
 **Source of truth trạng thái:** `.harness/feature_list.json` (`current_focus` = `feat-app1-task`, **in-progress**).
 
-**Vừa xong buổi 2026-07-31 (GĐ1 app — auth + list):**
-- Login → cookie → `proxy.ts` → `/tasks` **test PASS**
-- BFF `GET /api/tasks` + tasks page list
-- Bài học React dev: Strict Mode, AbortController, error state sticky
+**⚠️ Session mentor CLI đứt giữa chừng** (auth/token 401 sau khi đổi model) — học viên bảo "tao đã validation bằng schema rồi" nhưng **chưa review xong**. Mentor sau **phải đọc code hiện tại** trước khi giảng tiếp.
 
-**Bước tiếp:**
-1. React Query cho tasks
-2. Register page
-3. Task CRUD UI
+### Đang dừng đúng chỗ nào
 
-**Đã xong trước đó (2026-07-28/29):**
-- `apps/web` scaffold, shell `(dashboard)` / `(auth)`, login RHF + `loginSchema`.
-- `packages/shared` **build → `dist/`** — api NodeNext + Next đều consume JS thật.
-- Auth **httpOnly cookie** (không localStorage): BFF `POST /api/auth/login` trên Next `:3000`.
-- `proxy.ts` (Next 16) bảo vệ page `/tasks`… — đọc cookie server-side.
-- Fastify `jwtVerify()` vẫn **Bearer only** — BFF đọc cookie rồi gắn `Authorization` khi gọi `:3001`.
+**Feature:** Create Task UI trên `/tasks` — bước **FE validate bằng `createTaskSchema`** chưa chốt / chưa wire xong.
 
-**Bước tiếp buổi sau (một file một lúc):**
-1. React Query — `useQuery` cho `/api/tasks`
-2. Register page + BFF `/api/auth/register`
-3. Task create form
+| Bước | Status | Chi tiết |
+|------|--------|----------|
+| Quyết định hardcode `boardId` (hướng 1) | ✅ | Tránh scope creep Board/Project/Workspace CRUD |
+| Seed Board A UUID | ✅ | `e0dd4eb4-f55b-465d-a63f-f1ad11713bbe` |
+| BFF `POST /api/tasks` | ✅ | Forward cookie→Bearer + body; forward đúng `res.status` (201) |
+| Lý thuyết `useMutation` + `invalidateQueries` | ✅ giảng | Học viên nói "đã hiểu" |
+| Checklist form Create Task | ✅ đưa | Chưa implement hết |
+| Chốt RHF vs `useState` cho `title` | ❌ mở | Mentor hỏi — học viên **chưa trả lời**, nhảy sang hỏi schema |
+| FE `zodResolver(createTaskSchema)`? | ❌ mở / WIP | Mentor hỏi — học viên: "đã validation bằng schema rồi" |
+| Form JSX + `useMutation` hook + invalidate | ❌ chưa | Code WIP — xem bên dưới |
+| Browser test create task | ❌ chưa | |
 
-~~1. `app/api/tasks/route.ts`~~ ✅  
-~~2. `tasks/page.tsx` fetch list~~ ✅
+### Code hiện tại (`tasks/page.tsx`) — mentor sau REVIEW trước
+
+File đang **WIP nửa chừng** (học viên tự gõ):
+
+- Có: `BOARD_ID` hardcode; hàm `createTask(task: CreateTaskSchema)` — `JSON.stringify({ ...task, boardId: BOARD_ID })`; import `createTaskSchema` / `CreateTaskSchema` / `useMutation`
+- **Chưa có:** form UI; `useForm` / `zodResolver`; gọi `useMutation({...})` trong component; `useQueryClient` + `invalidateQueries`; submit handler
+- Import `createTaskSchema` + type `CreateTaskSchema` **≠** runtime validate. TypeScript type chỉ check lúc compile; `zodResolver` / `.parse()` mới chặn `title=""` trước khi fetch. Mentor cần **checkpoint** điểm này với học viên (có thể học viên nhầm type = validate).
+
+### Quyết định đã chốt buổi này
+
+1. **Hardcode `boardId`** lấy seed Board A — nợ kỹ thuật: Board/Project/Workspace management UI sau (không làm giữa Task CRUD). Chuỗi phụ thuộc: Workspace → Project → Board → Task.
+2. **Form Create Task nằm cùng trang `/tasks`** — không modal / route mới.
+3. Payload tối thiểu hợp lệ theo schema: `{ title, boardId }` — 2 field required; còn lại `.optional()`. BE Zod sẽ pass → 201 nếu title không rỗng.
+
+### Bài học đã giảng (giữ cho mentor sau)
+
+- **`useQuery` vs `useMutation`:** query = đọc, tự chạy khi mount; mutation = hành động ghi, chỉ chạy khi `mutate(...)`; `onSuccess` → `invalidateQueries({ queryKey: ["tasks"] })` để list refetch.
+- **`proxy.ts` vs check trong Route Handler:** middleware (`matcher` chỉ page `/tasks`…) = UX redirect; mỗi `/api/...` route **tự** check cookie → 401. `curl` thẳng `/api/tasks` **bypass** proxy — đúng by design, không thừa.
+- **BFF forward status:** success cũng phải `NextResponse.json(..., { status: res.status })` — không để mặc định 200 khi Fastify trả 201.
+- **Never trust the client:** BE luôn validate; FE validate (zodResolver) = UX bắt lỗi sớm, không thay thế BE.
+
+### Checkpoint mở — mentor sau hỏi lại bằng CHỮ
+
+1. Code hiện tại: type `CreateTaskSchema` có đủ thay `zodResolver(createTaskSchema)` không? (đáp án mong đợi: **không** — compile-time ≠ runtime)
+2. Form `title`: dùng **RHF + zodResolver** (nhất quán Login/Register) hay **`useState`** tạm?
+3. Nếu RHF + schema: `boardId` set qua `defaultValues` / hidden field / merge lúc submit (đừng bắt user gõ UUID).
+
+**Bước tiếp (một việc một lúc):**
+1. Review WIP `tasks/page.tsx` với học viên → chốt validate FE
+2. Wire form + `useMutation` + `invalidateQueries`
+3. Browser test: tạo task → list cập nhật, title rỗng bị chặn (FE và/hoặc BE 400)
+4. Sau đó mới Edit/Delete
+
+### Vừa xong trước đó cùng ngày (chiều — Register)
+
+- BFF + page Register; browser PASS 201 + 409
+- Nợ nhỏ: `onSubmit` thiếu `setFormError(null)` đầu hàm (không critical)
+
+### Vừa xong sáng 2026-08-03 — React Query wrap list
+
+- `providers.tsx` + `useQuery` list; browser PASS
+
+### Vừa xong 2026-07-31 — auth + list
+
+- Login → cookie → `proxy.ts` → `/tasks` PASS; BFF GET
+
+**Đã xong nền (2026-07-28/29):** apps/web scaffold, login BFF cookie, shared `dist/`, Fastify Bearer-only.
+
+~~1. React Query list~~ ✅ · ~~2. Register~~ ✅ · ~~3. BFF POST tasks~~ ✅ · **4. Create Task form (validate FE)** ← đang dừng
 
 **GĐ0.4 + GĐ0.3 IAM:** ✅ KHÉP.
 
@@ -116,6 +159,7 @@ Học viên chạy mentor qua `cline` TRONG TERMINAL của Cursor (KHÔNG phải
 | **BFF = cost prod** | +1 hop Next, không cần nếu cùng domain | Documented — không mang nguyên pattern dev lên prod |
 | **api chỉ Bearer** | `@fastify/jwt` default | Prod có thể thêm `@fastify/cookie` đọc cookie trực tiếp — hoãn |
 | **`packages/config`** | Học viên từ chối over-engineer | Mỗi workspace giữ `tsconfig.json` riêng |
+| **Hardcode `BOARD_ID` trên FE** | Chưa Board/Project/Workspace UI; tránh orphan + scope creep khi làm Create Task | Khi làm Board list/select UI (sau Task CRUD cơ bản) — thay hardcode bằng dropdown từ API |
 
 **Quyết định học viên:** Pattern **(A)** — học xong BFF tasks proxy GĐ1, ghi nợ refactor prod.
 

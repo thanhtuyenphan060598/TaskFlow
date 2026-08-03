@@ -99,8 +99,8 @@ model Project {
   updatedAt   DateTime @updatedAt
 
   workspace      Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  boards         Board[]
-  projectMembers ProjectMember[]
+  boards         Board[] // 1 project -> many boards
+  projectMembers ProjectMember[] // 1 project -> many project members
 
   @@index([workspaceId])
 }
@@ -129,7 +129,7 @@ model Board {
   updatedAt DateTime @updatedAt
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  tasks   Task[]
+  tasks   Task[] // 1 board -> many tasks
 
   @@index([projectId])
 }
@@ -148,7 +148,7 @@ model Task {
 
   board     Board          @relation(fields: [boardId], references: [id], onDelete: Cascade)
   author    User           @relation(fields: [authorId], references: [id])
-  assignees TaskAssignee[]
+  assignees TaskAssignee[] // 1 task -> many assignees
 
   @@index([boardId])
   @@index([authorId])

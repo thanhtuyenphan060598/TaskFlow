@@ -1,49 +1,70 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { createTaskSchema, type CreateTaskSchema } from "@taskflow/shared";
+import { useMutation } from "@tanstack/react-query";
+
+const BOARD_ID = "e0dd4eb4-f55b-465d-a63f-f1ad11713bbe";
 
 type Task = {
   id: string;
   title: string;
 };
 
+async function fetchTasks(): Promise<Task[]> {
+  const response = await fetch("/api/tasks", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json"
+    }
+  });
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error ?? "Failed to load tasks");
+  }
+
+  return data;
+}
+
+async function createTask(task: CreateTaskSchema): Promise<CreateTaskSchema> {
+  const response = await fetch("/api/tasks", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      ...task,
+      boardId: BOARD_ID
+    })
+  });
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error ?? "Failed to create task");
+  }
+
+  return data;
+}
+
 export default function TasksPage() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const {
+    data: tasks,
+    isLoading,
+    error
+  } = useQuery({
+    queryKey: ["tasks"],
+    queryFn: fetchTasks
+  });
 
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch("/api/tasks", { signal: controller.signal })
-      .then(async (response) => {
-        const data = await response.json();
-
-        if (response.ok) {
-          setTasks(data);
-        } else {
-          setError(new Error(data.error ?? "Failed to load tasks"));
-        }
-      })
-      .catch((err: unknown) => {
-        if (err instanceof DOMException && err.name === "AbortError") return;
-        setError(err instanceof Error ? err : new Error("Failed to load tasks"));
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-    return () => {
-      controller.abort();
-    };
-  }, []);
-
-  if (loading) return <div>Loading...</div>;
+  if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
 
   return (
     <div>
       <h1 className="text-lg font-medium text-text">Tasks</h1>
       <ul className="mt-4 flex flex-col gap-2">
-        {tasks.map((task) => (
+        {tasks?.map((task) => (
           <li key={task.id}>{task.title}</li>
         ))}
       </ul>
