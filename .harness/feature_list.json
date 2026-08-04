@@ -113,7 +113,7 @@
       "description": "FE Next.js board/task, React Query, RHF+Zod, Tailwind, drag-drop, realtime board (WebSocket presence), offline (Zustand+IndexedDB), search/filter/pagination",
       "dependencies": ["feat-0.4-design-system"],
       "status": "in-progress",
-      "evidence": "2026-08-04: Task CRUD UI cơ bản KHÉP — create 201, delete 204, edit PATCH 200 browser PASS; BFF /api/tasks + /api/tasks/[id]; error-handler dev 500 message; $transaction task+audit. feat vẫn in-progress (board UI, drag-drop, realtime, offline…). Nợ: hardcode BOARD_ID; login catch setLoginError; GĐ9 BFF. NEXT: polish | status/priority | Board API."
+      "evidence": "2026-08-04: CRUD+status/priority PASS; Board GET+BFF+select (bỏ hardcode); FE api/+useTasks; silent refresh BFF+request retry browser PASS (401→refresh→retry). Nợ: JWT type claim access vs refresh; redirect login khi refresh fail; GĐ9 BFF. NEXT: drag-drop/filter/realtime hoặc JWT type."
     },
     {
       "id": "feat-app2-time",

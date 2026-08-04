@@ -12,5 +12,24 @@ export const boardRepository = {
         }
       }
     });
+  },
+
+  findAllForUser(userId: string) {
+    return prisma.board.findMany({
+      where: {
+        project: {
+          workspace: {
+            memberships: {
+              some: { userId }
+            }
+          }
+        }
+      },
+      select: {
+        id: true,
+        name: true,
+        projectId: true
+      }
+    })
   }
 };

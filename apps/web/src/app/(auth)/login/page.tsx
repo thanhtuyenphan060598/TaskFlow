@@ -20,6 +20,7 @@ export default function LoginPage() {
   const router = useRouter();
 
   const onSubmit: SubmitHandler<LoginSchema> = async (data: LoginSchema) => {
+    setLoginError(null);
     try {
       const res = await fetch(`/api/auth/login`, {
         method: "POST",
@@ -27,17 +28,14 @@ export default function LoginPage() {
         body: JSON.stringify(data)
       });
       if (!res.ok) {
-        setLoginError(
-          await res
-            .json()
-            .catch(() => {})
-            .then((data) => data.error)
-        );
+        const body = await res.json().catch(() => ({}));
+        setLoginError(body.error ?? "Login failed");
         return;
       }
       router.push("/tasks");
     } catch (error) {
       console.error(error);
+      setLoginError("Network error — cannot reach server")
     }
   };
 

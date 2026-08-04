@@ -77,44 +77,76 @@ Học viên chạy mentor qua `cline` TRONG TERMINAL của Cursor (KHÔNG phải
 (2) Nén context thì bảo học viên MỞ SESSION MỚI (đọc CONTEXT.md), đừng bấm Compact UI.
 (3) Không cần xóa cache/reinstall. Muốn dùng nút bấm/compact mượt thì học viên tự chuyển sang Chat panel IDE.
 
-## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật 2026-08-04)
+## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật 2026-08-04 chiều)
 
 **Source of truth trạng thái:** `.harness/feature_list.json` (`current_focus` = `feat-app1-task`, **in-progress**).
 
 ### Đang dừng đúng chỗ nào
 
-**Milestone hôm nay:** Task CRUD UI cơ bản trên `/tasks` — **KHÉP** (Create/Read/Update/Delete + BFF + verify browser).
+| Bước | Status |
+|------|--------|
+| Task CRUD UI + status/priority edit | ✅ browser PASS |
+| Board API `GET /boards` + BFF + FE select (bỏ hardcode) | ✅ PASS |
+| FE refactor: `api/` + `hooks/useTasks` (query+mutation gộp) + `request()` | ✅ code |
+| Silent refresh access token khi hết hạn | ✅ browser PASS: 401→refresh→retry (POST+GET tasks) |
+| Commit/push buổi này | ✅ (session này) |
 
-| Bước | Status | Chi tiết |
-|------|--------|----------|
-| Create form RHF + zodResolver + mutation | ✅ | Browser 201 PASS |
-| Dev error surface (B) | ✅ | `error-handler` dev message; FE `createTaskError` |
-| Delete BFF `[id]` + FE mutation | ✅ | 204 + list PASS (nhớ không `json()` body 204) |
-| Edit BFF PATCH + FE draftTitle | ✅ | Browser PATCH 200 PASS |
-| `$transaction` task+audit | ✅ | Từ buổi trước |
-| Hardcode `BOARD_ID` | nợ | Board UI sau |
+### Quy ước học viên chốt 2026-08-04 — **viết clean từ đầu**
 
-### Bài học buổi 2026-08-04
 
-1. HTTP `!res.ok` ≠ network throw — login/`fetch` tay cần `try/catch`.
-2. Login chưa bắt buộc `useMutation` (auth+redirect, viết trước RQ); create/delete dùng mutation vì `invalidateQueries`.
-3. Edit row: controlled `draftTitle`, **không** tái dùng `register` của form Create.
-4. BFF DELETE phải xử lý **204 No Content** riêng.
+> **Không** đợi “làm xong feature rồi mới refactor”. Gom fetch/hook/UI ngay khi feature còn nhỏ. Refactor muộn = cực, dễ vỡ, tốn buổi học chỉ để dọn nhà.
 
-### Nợ nhỏ (không chặn)
+Áp dụng FE web:
+- HTTP → `src/api/<domain>/` + helper `request()` trong `api/http.ts`
+- React Query → hook theo domain (`useTasks` gồm query + mutations; `useBoards` query)
+- Page ≈ UI + form state thôi
+- **Tham khảo (chưa triển khai):** có thể đổi `fetch` → **axios** sau — xem mục “fetch vs axios” bên dưới. Hiện giữ `fetch` + `request()`.
 
-- Login `catch` nên `setLoginError` (đừng chỉ `console.error`)
-- Edit row: đừng bind `errors.title` từ create RHF; tránh trùng `id="title"`
-- `updateTask` return type vs `return data`
+### fetch vs axios (tham khảo — KHÔNG đổi stack buổi này)
 
-### Bước tiếp (feat-app1-task còn rộng)
+| | `fetch` (hiện tại) | axios |
+|--|-------------------|--------|
+| Có sẵn browser | ✅ không thêm dep | ❌ thêm package |
+| JSON | tự `.json()`, tự set header trong `request()` | mặc định parse JSON tiện hơn |
+| `!res.ok` | phải check tay (như đang làm) | reject trên status 4xx/5xx (interceptor) |
+| Interceptor 401→refresh | viết tay quanh `request()` | `axios.interceptors` quen thuộc |
+| Upload/progress, cancel | đủ với fetch hiện đại | API cũ quen hơn một số team |
 
-Feature list còn: board UX thật (bỏ hardcode), drag-drop, realtime, offline, search/filter…  
-**Gợi ý buổi sau (chọn 1):** (1) polish nợ nhỏ + commit, (2) status/priority trên Edit, (3) Board list API tối thiểu thay hardcode `BOARD_ID`.
+**Kết luận tạm:** giữ `fetch` + `request()` đủ học BFF/RQ. Axios **được phép** sau nếu muốn interceptor refresh mượt — không bắt buộc, không đổi hôm nay.
+
+### Bước tiếp
+
+1. (Optional) Redirect `/login` khi refresh fail  
+2. (Nợ BE) JWT claim `type: "access" | "refresh"` — hiện cùng SECRET nên access token gửi vào `/refresh` vẫn verify được nếu chưa hết hạn  
+3. Tiếp feat-app1-task: drag-drop / filter / realtime… hoặc dừng commit sạch
+
+### Vì sao access gọi `/refresh` vẫn qua? (học viên hỏi 2026-08-04)
+
+Login ký **cả hai** bằng **cùng** `JWT_SECRET`, payload gần như chỉ `{ userId }` + `exp` khác nhau.
+
+`/refresh` chỉ làm: `jwt.verify(token)` — **không** check “đây có phải refresh không”.
+
+→ Token nào ký bằng secret đó + còn hạn đều pass → gửi **access** vào body `refreshToken` vẫn được access mới (nếu access chưa hết `exp`).
+
+Fix đúng: lúc `sign` thêm `type: "refresh"` / `type: "access"`; lúc verify refresh bắt buộc `payload.type === "refresh"`. Hoãn — nợ đã ghi feature_list từ GĐ0.1.
+
+### Checklist silent refresh — DONE
+
+1. BFF `POST apps/web/src/app/api/auth/refresh/route.ts`  
+   - Đọc cookie `refreshToken` → Fastify `POST /auth/refresh` body `{ refreshToken }`  
+   - OK: set cookie `accessToken` mới (httpOnly, maxAge 15m, giống login)  
+   - Fail: 401 + nên xóa cả 2 cookie auth  
+2. Sửa `request()` trong `api/http.ts`  
+   - Nếu response **401** và chưa retry và URL không phải refresh → gọi BFF refresh → **retry 1 lần** request gốc  
+   - **Single-flight:** nhiều 401 cùng lúc chỉ 1 refresh (promise dùng chung)  
+3. Browser test: xóa/hỏng `accessToken`, giữ `refreshToken` → thao tác tasks vẫn OK; Network thấy refresh rồi retry  
+
+**Không** cần axios.
 
 **GĐ0.4 + GĐ0.3 IAM:** ✅ KHÉP.
 
 ### Nợ kỹ thuật GĐ1-web (học viên chốt 2026-07-29 — trả GĐ9 deploy)
+
 
 | Nợ | Lý do dev | Trả khi nào |
 |----|-----------|-------------|
@@ -122,7 +154,10 @@ Feature list còn: board UX thật (bỏ hardcode), drag-drop, realtime, offline
 | **BFF = cost prod** | +1 hop Next, không cần nếu cùng domain | Documented — không mang nguyên pattern dev lên prod |
 | **api chỉ Bearer** | `@fastify/jwt` default | Prod có thể thêm `@fastify/cookie` đọc cookie trực tiếp — hoãn |
 | **`packages/config`** | Học viên từ chối over-engineer | Mỗi workspace giữ `tsconfig.json` riêng |
-| **Hardcode `BOARD_ID` trên FE** | Chưa Board/Project/Workspace UI; tránh orphan + scope creep khi làm Create Task | Khi làm Board list/select UI (sau Task CRUD cơ bản) — thay hardcode bằng dropdown từ API |
+| **Hardcode `BOARD_ID` trên FE** | ~~Chưa Board list~~ → đã có `GET /boards` + select | Đã trả phần lớn 2026-08-04; còn Board CRUD UI sau nếu cần |
+| **Silent refresh access token** | Cookie refresh + BFF + request retry | ✅ PASS 2026-08-04 |
+| **JWT `type` access vs refresh** | Cùng SECRET; `/refresh` chỉ verify chữ ký | Thêm claim `type` khi sign + check khi refresh |
+| **Axios thay fetch** | Tham khảo | **Chưa làm**; giữ `fetch` + `request()` |
 
 **Quyết định học viên:** Pattern **(A)** — học xong BFF tasks proxy GĐ1, ghi nợ refactor prod.
 

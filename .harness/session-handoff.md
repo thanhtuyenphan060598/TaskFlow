@@ -1,4 +1,4 @@
-# Session Handoff — 2026-08-04
+# Session Handoff — 2026-08-04 tối
 
 ## Mở session mới
 
@@ -11,19 +11,17 @@ pnpm --filter @taskflow/web dev
 
 Đọc: `.harness/CONTEXT.md` mục **⏸️ ĐIỂM DỪNG**.
 
-## Đang làm
+## Xong
 
-`feat-app1-task` — **CRUD UI cơ bản KHÉP**; feature vẫn in-progress (board/drag/realtime…).
+- Task CRUD + status/priority; boards API+select; FE `api/`+`useTasks`
+- Silent refresh PASS
+- Quy ước: clean từ đầu; mentor chỉ code khi nhờ
 
-## Xong buổi này
+## Buổi sau — chọn
 
-- Create verify 201; error surface B; Delete 204; Edit PATCH 200
-
-## Buổi sau — chọn 1
-
-1. Polish nợ nhỏ (login catch, edit ids)
-2. Edit status/priority
-3. Board list API — bỏ hardcode `BOARD_ID`
+1. Redirect `/login` khi refresh fail  
+2. JWT `type` access vs refresh  
+3. feat-app1 lớn (drag-drop / filter / realtime)
 
 ## Seed
 

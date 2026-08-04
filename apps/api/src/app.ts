@@ -8,6 +8,7 @@ import { env } from "./config/env.js";
 import { authPlugin } from "./plugins/auth.plugin.js";
 import rateLimit from "@fastify/rate-limit";
 import cors from "@fastify/cors";
+import { boardRoutes } from "./routes/board.routes.js";
 
 const PREFIX = "/api/v1";
 
@@ -26,6 +27,7 @@ export async function buildApp() {
   app.register(healthRoutes, { prefix: `${PREFIX}/health` });
   app.register(taskRoutes, { prefix: `${PREFIX}/tasks` });
   app.register(authRoutes, { prefix: `${PREFIX}/auth` });
+  app.register(boardRoutes, { prefix: `${PREFIX}/boards` });
 
   return app;
 }
