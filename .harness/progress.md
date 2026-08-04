@@ -11,7 +11,7 @@
 - [x] status/priority, Board API+BFF+select, FE refactor (`api/` + `useTasks`)
 - [x] Silent refresh BFF + `request()` retry — browser PASS (401→refresh→task POST/GET)
 - [x] Harness: clean-from-start; giải thích access≠refresh type claim
-- [ ] Commit/push (đang làm)
+- [x] Commit/push `c598eb2`
 
 ## What's Next
 
