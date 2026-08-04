@@ -113,7 +113,7 @@
       "description": "FE Next.js board/task, React Query, RHF+Zod, Tailwind, drag-drop, realtime board (WebSocket presence), offline (Zustand+IndexedDB), search/filter/pagination",
       "dependencies": ["feat-0.4-design-system"],
       "status": "in-progress",
-      "evidence": "2026-08-03 tối muộn: Create Task form RHF+zodResolver(createTaskSchema)+useMutation+invalidate PASS code; CreateTaskInput/Output cho z.coerce.date; diagnose 500=AuditLog missing→migrate add_audit_log applied (status up to date); $transaction create/update/delete+audit với db optional trên task/audit repo (review OK). NEXT: browser verify 201; B surface lỗi error-handler/FE; rồi Edit/Delete UI. Nợ: hardcode BOARD_ID; GĐ9 BFF."
+      "evidence": "2026-08-04: Task CRUD UI cơ bản KHÉP — create 201, delete 204, edit PATCH 200 browser PASS; BFF /api/tasks + /api/tasks/[id]; error-handler dev 500 message; $transaction task+audit. feat vẫn in-progress (board UI, drag-drop, realtime, offline…). Nợ: hardcode BOARD_ID; login catch setLoginError; GĐ9 BFF. NEXT: polish | status/priority | Board API."
     },
     {
       "id": "feat-app2-time",

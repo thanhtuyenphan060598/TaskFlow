@@ -77,49 +77,40 @@ Học viên chạy mentor qua `cline` TRONG TERMINAL của Cursor (KHÔNG phải
 (2) Nén context thì bảo học viên MỞ SESSION MỚI (đọc CONTEXT.md), đừng bấm Compact UI.
 (3) Không cần xóa cache/reinstall. Muốn dùng nút bấm/compact mượt thì học viên tự chuyển sang Chat panel IDE.
 
-## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật 2026-08-03 tối muộn, dừng buổi)
+## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật 2026-08-04)
 
 **Source of truth trạng thái:** `.harness/feature_list.json` (`current_focus` = `feat-app1-task`, **in-progress**).
 
 ### Đang dừng đúng chỗ nào
 
-**Feature:** Create Task — form FE đã wire; BE transaction create+audit đã làm. **Chưa xong:** B (FE/API surface lỗi rõ) + browser verify 201 sau migrate + Edit/Delete UI.
+**Milestone hôm nay:** Task CRUD UI cơ bản trên `/tasks` — **KHÉP** (Create/Read/Update/Delete + BFF + verify browser).
 
 | Bước | Status | Chi tiết |
 |------|--------|----------|
-| Hardcode `boardId` Board A | ✅ | `e0dd4eb4-f55b-465d-a63f-f1ad11713bbe` |
-| BFF `POST /api/tasks` | ✅ | Forward Bearer + status 201 |
-| Chốt RHF + `zodResolver(createTaskSchema)` | ✅ | Học viên từ chối useState tạm |
-| Type ≠ Zod runtime | ✅ hiểu | |
-| Form + `useMutation` + `invalidateQueries` + reset | ✅ | `tasks/page.tsx` |
-| `CreateTaskInput` / `CreateTaskSchema` (coerce dueDate) | ✅ | shared schema export; `useForm<Input, unknown, Output>` |
-| Bug 500 sau create (partial success) | ✅ chẩn đoán | Task commit rồi `AuditLog` fail — bảng chưa migrate |
-| `pnpm prisma:migrate` (`add_audit_log`) | ✅ | `migrate status` = up to date |
-| `$transaction` create/update/delete + audit | ✅ code | Repo `db` optional chỉ task+audit; mentor review logic PASS |
-| **B — surface lỗi Prisma/FE rõ** | ❌ NEXT | `error-handler` nuốt 500 thành `"Internal Server Error"` |
-| Browser retest create → 201 + list | ⚠️ chưa confirm session này | Làm đầu buổi sau |
-| Edit / Delete UI | ❌ chưa | |
+| Create form RHF + zodResolver + mutation | ✅ | Browser 201 PASS |
+| Dev error surface (B) | ✅ | `error-handler` dev message; FE `createTaskError` |
+| Delete BFF `[id]` + FE mutation | ✅ | 204 + list PASS (nhớ không `json()` body 204) |
+| Edit BFF PATCH + FE draftTitle | ✅ | Browser PATCH 200 PASS |
+| `$transaction` task+audit | ✅ | Từ buổi trước |
+| Hardcode `BOARD_ID` | nợ | Board UI sau |
 
-### Quyết định / bài học buổi này
+### Bài học buổi 2026-08-04
 
-1. Giữ **full `createTaskSchema`** trên form (không `.pick`) — chấp nhận `CreateTaskInput` vì hardcode + chưa có field dueDate trên UI.
-2. **`z.coerce.date()`** = ép input (string JSON…) → `Date`; khác `.nullable()/.optional()`. Input ≠ output → RHF cần 3 generic.
-3. Partial success nguy hiểm: DB đổi + HTTP 500 → duplicate nếu user retry. Fix atomic: `prisma.$transaction` + truyền `tx` xuống repo.
-4. **Không** thêm `db` cho mọi repository — chỉ method ghi tham gia transaction.
-5. Cross-service (Board+Project): **orchestrator/use-case** mở 1 tx, truyền `tx` vào service/repo — không để mỗi service tự `$transaction` riêng.
-6. Chọn học **C** (A transaction + B lỗi rõ) — A xong, B để mai.
+1. HTTP `!res.ok` ≠ network throw — login/`fetch` tay cần `try/catch`.
+2. Login chưa bắt buộc `useMutation` (auth+redirect, viết trước RQ); create/delete dùng mutation vì `invalidateQueries`.
+3. Edit row: controlled `draftTitle`, **không** tái dùng `register` của form Create.
+4. BFF DELETE phải xử lý **204 No Content** riêng.
 
-### Bước tiếp buổi sau (một việc một lúc)
+### Nợ nhỏ (không chặn)
 
-1. Browser: create task → **201**, list cập nhật, title rỗng bị FE chặn
-2. **B:** cải thiện `error-handler` / FE hiện message hữu ích (dev) khi 500 — đừng chỉ `"Internal Server Error"` vô nghĩa
-3. Edit / Delete task UI
+- Login `catch` nên `setLoginError` (đừng chỉ `console.error`)
+- Edit row: đừng bind `errors.title` từ create RHF; tránh trùng `id="title"`
+- `updateTask` return type vs `return data`
 
-### Đã xong trước đó cùng ngày
+### Bước tiếp (feat-app1-task còn rộng)
 
-- Register BFF+page PASS; React Query list PASS; BFF POST; mentor resume từ checkpoint schema
-
-~~Create Task form + tx~~ gần xong · **B error surface + verify 201** ← dừng · Edit/Delete sau
+Feature list còn: board UX thật (bỏ hardcode), drag-drop, realtime, offline, search/filter…  
+**Gợi ý buổi sau (chọn 1):** (1) polish nợ nhỏ + commit, (2) status/priority trên Edit, (3) Board list API tối thiểu thay hardcode `BOARD_ID`.
 
 **GĐ0.4 + GĐ0.3 IAM:** ✅ KHÉP.
 

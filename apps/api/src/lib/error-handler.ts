@@ -22,5 +22,9 @@ export function errorHandler(error: FastifyError, request: FastifyRequest, reply
 
   // Anything else -> unexpected 500.
   request.log.error(error);
+  const isDev = process.env.NODE_ENV === "development";
+  if (isDev) {
+    return reply.code(500).send({ error: error.message });
+  }
   return reply.code(500).send({ error: "Internal Server Error" });
 }

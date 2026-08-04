@@ -1,4 +1,4 @@
-# Session Handoff — 2026-08-03 tối muộn
+# Session Handoff — 2026-08-04
 
 ## Mở session mới
 
@@ -11,22 +11,19 @@ pnpm --filter @taskflow/web dev
 
 Đọc: `.harness/CONTEXT.md` mục **⏸️ ĐIỂM DỪNG**.
 
-Mentor: **tao/mày**; học viên tự gõ code; hỏi bằng chữ.
-
 ## Đang làm
 
-`feat-app1-task` — Create Task gần xong.
+`feat-app1-task` — **CRUD UI cơ bản KHÉP**; feature vẫn in-progress (board/drag/realtime…).
 
-## Xong
+## Xong buổi này
 
-- FE form RHF + full `createTaskSchema` + mutation/invalidate
-- `CreateTaskInput` cho coerce dueDate
-- Migrate AuditLog; `$transaction` task+audit (create/update/delete)
+- Create verify 201; error surface B; Delete 204; Edit PATCH 200
 
-## Buổi sau — ONE step đầu
+## Buổi sau — chọn 1
 
-1. Browser verify create → **201**
-2. Rồi **B:** surface lỗi API/FE rõ (error-handler đang trả `"Internal Server Error"` chung)
+1. Polish nợ nhỏ (login catch, edit ids)
+2. Edit status/priority
+3. Board list API — bỏ hardcode `BOARD_ID`
 
 ## Seed
 
