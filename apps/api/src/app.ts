@@ -19,8 +19,15 @@ export async function buildApp() {
     credentials: true,
   });
   await app.register(rateLimit, { max: 100, timeWindow: "1m" });
-  app.register(fastifyJwt, { secret: env.JWT_SECRET });
-  app.register(authPlugin);
+  await app.register(fastifyJwt, {
+    secret: env.JWT_ACCESS_SECRET,
+    namespace: "access",
+  });
+  await app.register(fastifyJwt, {
+    secret: env.JWT_REFRESH_SECRET,
+    namespace: "refresh",
+  });
+  await app.register(authPlugin);
 
   app.setErrorHandler(errorHandler);
 

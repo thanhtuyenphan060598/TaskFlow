@@ -3,8 +3,8 @@ import { unauthorized } from "../lib/errors.js";
 
 export async function authenticate(request: FastifyRequest) {
   try {
-    await request.jwtVerify();
-  } catch (error) {
+    await request.accessJwtVerify();
+  } catch {
     throw unauthorized("Unauthorized");
   }
 }

@@ -1,53 +1,37 @@
 "use client";
 
 import { Button, FormField, Input } from "@taskflow/ui";
-import { SubmitHandler, useForm } from "react-hook-form";
-import { registerSchema, type RegisterSchema } from "@taskflow/shared";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useActionState } from "react";
+import { registerAction, type AuthActionState } from "../actions";
 
 export default function RegisterPage() {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors }
-  } = useForm<RegisterSchema>({
-    resolver: zodResolver(registerSchema)
-  });
-
-  const router = useRouter();
-  const [formError, setFormError] = useState<string | null>(null);
-
-  const onSubmit: SubmitHandler<RegisterSchema> = async (data: RegisterSchema) => {
-    const res = await fetch(`/api/auth/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
-    });
-
-    if (!res.ok) {
-    const body = await res.json();
-      setFormError(body.error ?? "Failed to register");
-      return;
-    }
-    
-    router.push("/login");
-  };
+  const [state, action, pending] = useActionState<AuthActionState, FormData>(
+    registerAction,
+    {}
+  );
 
   return (
-    <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
-      {formError && <p className="text-sm text-red-500">{formError}</p>}
-      <FormField label="Name" htmlFor="name" error={errors.name?.message}>
-        <Input type="text" id="name" placeholder="Name" {...register("name")} />
+    <form className="flex flex-col gap-4" action={action}>
+      {state.error ? <p className="text-sm text-red-500">{state.error}</p> : null}
+      <FormField label="Name" htmlFor="name">
+        <Input type="text" id="name" name="name" placeholder="Name" required />
       </FormField>
-      <FormField label="Email" htmlFor="email" error={errors.email?.message}>
-        <Input type="email" id="email" placeholder="Email" {...register("email")} />
+      <FormField label="Email" htmlFor="email">
+        <Input type="email" id="email" name="email" placeholder="Email" required />
       </FormField>
-      <FormField label="Password" htmlFor="password" error={errors.password?.message}>
-        <Input type="password" id="password" placeholder="Password" {...register("password")} />
+      <FormField label="Password" htmlFor="password">
+        <Input
+          type="password"
+          id="password"
+          name="password"
+          placeholder="Password"
+          minLength={8}
+          required
+        />
       </FormField>
-      <Button type="submit">Register</Button>
+      <Button type="submit" disabled={pending}>
+        {pending ? "Registering..." : "Register"}
+      </Button>
     </form>
   );
 }

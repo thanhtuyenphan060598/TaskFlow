@@ -1,54 +1,27 @@
 "use client";
 
 import { Button, FormField, Input } from "@taskflow/ui";
-import { SubmitHandler, useForm } from "react-hook-form";
-import { loginSchema, type LoginSchema } from "@taskflow/shared";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useActionState } from "react";
+import { loginAction, type AuthActionState } from "../actions";
 
 export default function LoginPage() {
-  const [loginError, setLoginError] = useState<string | null>(null);
-  const {
-    register,
-    handleSubmit,
-    formState: { errors }
-  } = useForm<LoginSchema>({
-    resolver: zodResolver(loginSchema)
-  });
-
-  const router = useRouter();
-
-  const onSubmit: SubmitHandler<LoginSchema> = async (data: LoginSchema) => {
-    setLoginError(null);
-    try {
-      const res = await fetch(`/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-      });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        setLoginError(body.error ?? "Login failed");
-        return;
-      }
-      router.push("/tasks");
-    } catch (error) {
-      console.error(error);
-      setLoginError("Network error — cannot reach server")
-    }
-  };
+  const [state, action, pending] = useActionState<AuthActionState, FormData>(
+    loginAction,
+    {}
+  );
 
   return (
-    <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
-      <FormField label="Email" htmlFor="email" error={errors.email?.message}>
-        <Input type="email" id="email" placeholder="Email" {...register("email")} />
+    <form className="flex flex-col gap-4" action={action}>
+      <FormField label="Email" htmlFor="email">
+        <Input type="email" id="email" name="email" placeholder="Email" required />
       </FormField>
-      <FormField label="Password" htmlFor="password" error={errors.password?.message}>
-        <Input type="password" id="password" placeholder="Password" {...register("password")} />
+      <FormField label="Password" htmlFor="password">
+        <Input type="password" id="password" name="password" placeholder="Password" required />
       </FormField>
-      {loginError && <div className="text-red-500">{loginError}</div>}
-      <Button type="submit">Login</Button>
+      {state.error ? <div className="text-red-500">{state.error}</div> : null}
+      <Button type="submit" disabled={pending}>
+        {pending ? "Logging in..." : "Login"}
+      </Button>
     </form>
   );
 }

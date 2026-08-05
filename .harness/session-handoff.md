@@ -1,28 +1,32 @@
-# Session Handoff — 2026-08-04 tối
+# Session Handoff — 2026-08-05 (zero Route Handlers)
 
-## Mở session mới
+## Mở session
 
 ```bash
 cd /Users/ecbdeveloper/Documents/TaskFlow && ./.harness/init.sh
-pnpm --filter @taskflow/shared build
 pnpm --filter @taskflow/api dev
 pnpm --filter @taskflow/web dev
 ```
 
-Đọc: `.harness/CONTEXT.md` mục **⏸️ ĐIỂM DỪNG**.
+## Architecture (đã ship)
 
-## Xong
+- Dual JWT: `JWT_ACCESS_SECRET` + `JWT_REFRESH_SECRET` (`namespace` access/refresh)
+- Tasks: RSC + Server Actions; client islands = create form + task row
+- Auth: `app/(auth)/actions.ts` (login/register); **không** còn `app/api/**`
+- Refresh: `proxy.ts` + `lib/api/server.ts` `apiFetch`
+- Đã gỡ React Query / RHF / data+auth BFF Route Handlers
 
-- Task CRUD + status/priority; boards API+select; FE `api/`+`useTasks`
-- Silent refresh PASS
-- Quy ước: clean từ đầu; mentor chỉ code khi nhờ
+## Verify đã PASS
 
-## Buổi sau — chọn
-
-1. Redirect `/login` khi refresh fail  
-2. JWT `type` access vs refresh  
-3. feat-app1 lớn (drag-drop / filter / realtime)
+- Browser login → `/tasks`
+- Refresh cookie only → proxy set access mới
+- Invalid refresh → `/login`
+- lint + tsc PASS
 
 ## Seed
 
 `owner@taskflow.dev` / `password123`
+
+## Next
+
+Filter / drag-drop / realtime (RQ chỉ khi cần); GĐ9 cùng domain

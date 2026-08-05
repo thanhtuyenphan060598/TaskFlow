@@ -1,4 +1,4 @@
-import "@fastify/jwt";
+import type { FastifyJwtNamespace } from "@fastify/jwt";
 import type { FastifyReply, FastifyRequest } from "fastify";
 
 declare module "@fastify/jwt" {
@@ -11,7 +11,13 @@ declare module "@fastify/jwt" {
 }
 
 declare module "fastify" {
-  interface FastifyInstance {
+  interface FastifyInstance
+    extends FastifyJwtNamespace<{ namespace: "access" }>,
+      FastifyJwtNamespace<{ namespace: "refresh" }> {
     authenticate: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
+  }
+
+  interface FastifyRequest {
+    accessJwtVerify: FastifyRequest["jwtVerify"];
   }
 }

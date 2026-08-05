@@ -114,34 +114,33 @@ Học viên chạy mentor qua `cline` TRONG TERMINAL của Cursor (KHÔNG phải
 
 **Kết luận tạm:** giữ `fetch` + `request()` đủ học BFF/RQ. Axios **được phép** sau nếu muốn interceptor refresh mượt — không bắt buộc, không đổi hôm nay.
 
-### Bước tiếp
+### Bước tiếp (2026-08-05 — sau RSC refactor)
 
-1. (Optional) Redirect `/login` khi refresh fail  
-2. (Nợ BE) JWT claim `type: "access" | "refresh"` — hiện cùng SECRET nên access token gửi vào `/refresh` vẫn verify được nếu chưa hết hạn  
-3. Tiếp feat-app1-task: drag-drop / filter / realtime… hoặc dừng commit sạch
+1. Filter / search / drag-drop / realtime (đưa RQ lại **chỉ khi** cần)
+2. GĐ9 cùng domain
 
-### Vì sao access gọi `/refresh` vẫn qua? (học viên hỏi 2026-08-04)
+### Architecture pivot — tasks Next canonical ✅ (2026-08-05)
 
-Login ký **cả hai** bằng **cùng** `JWT_SECRET`, payload gần như chỉ `{ userId }` + `exp` khác nhau.
+**Vấn đề:** all-client + RQ + data BFF nở — tham stack, sai chỗ cho list/CRUD đơn.
 
-`/refresh` chỉ làm: `jwt.verify(token)` — **không** check “đây có phải refresh không”.
+**Đích đã ship:**
+- RSC [`tasks/page.tsx`](apps/web/src/app/(dashboard)/tasks/page.tsx) + `lib/api/server.ts` (cookies → Fastify, refresh-on-401, `redirect(/login)`)
+- Server Actions create/update/delete + Zod + `revalidatePath`
+- Island client: `create-task-form.tsx`, `task-row.tsx` only
+- **Xóa** data BFF `api/tasks`, `api/tasks/[id]`, `api/boards`; gỡ `@tanstack/react-query`
+- **Xóa toàn bộ Route Handlers**; login/register dùng Server Actions, refresh nằm trong server `apiFetch`
 
-→ Token nào ký bằng secret đó + còn hạn đều pass → gửi **access** vào body `refreshToken` vẫn được access mới (nếu access chưa hết `exp`).
+**Verify:** login page 200, endpoint cũ `/api/auth/login` 404; lint + `tsc` PASS.
 
-Fix đúng: lúc `sign` thêm `type: "refresh"` / `type: "access"`; lúc verify refresh bắt buộc `payload.type === "refresh"`. Hoãn — nợ đã ghi feature_list từ GĐ0.1.
+### Lỗ hổng 1 secret → FIX 2 secret ✅ (2026-08-05)
 
-### Checklist silent refresh — DONE
+`JWT_ACCESS_SECRET` + `JWT_REFRESH_SECRET`, namespace `access`/`refresh`. Verify curl PASS. Không migrate Nest vì docs JWT.
 
-1. BFF `POST apps/web/src/app/api/auth/refresh/route.ts`  
-   - Đọc cookie `refreshToken` → Fastify `POST /auth/refresh` body `{ refreshToken }`  
-   - OK: set cookie `accessToken` mới (httpOnly, maxAge 15m, giống login)  
-   - Fail: 401 + nên xóa cả 2 cookie auth  
-2. Sửa `request()` trong `api/http.ts`  
-   - Nếu response **401** và chưa retry và URL không phải refresh → gọi BFF refresh → **retry 1 lần** request gốc  
-   - **Single-flight:** nhiều 401 cùng lúc chỉ 1 refresh (promise dùng chung)  
-3. Browser test: xóa/hỏng `accessToken`, giữ `refreshToken` → thao tác tasks vẫn OK; Network thấy refresh rồi retry  
+### Checklist silent refresh — SUPERSEDED (client `http.ts` đã xóa)
 
-**Không** cần axios.
+Login Server Action set hai httpOnly cookies. Refresh:
+- `proxy.ts` — thiếu access nhưng còn refresh → gọi Fastify `/auth/refresh`, set cookie, redirect lại
+- `lib/api/server.ts` `apiFetch` — 401 → refresh + retry (token override nếu RSC không set được cookie)
 
 **GĐ0.4 + GĐ0.3 IAM:** ✅ KHÉP.
 
@@ -150,30 +149,21 @@ Fix đúng: lúc `sign` thêm `type: "refresh"` / `type: "access"`; lúc verify 
 
 | Nợ | Lý do dev | Trả khi nào |
 |----|-----------|-------------|
-| **BFF Route Handlers** (`/api/auth/login`, `/api/tasks`…) | Dev tách `:3000` / `:3001` — cookie httpOnly không cross-origin | **GĐ9:** nginx cùng domain `app.com` — `/api/v1` → Fastify; client `fetch("/api/v1/tasks", { credentials: "include" })`; **xóa** proxy data routes (giữ login BFF tùy chọn) |
-| **BFF = cost prod** | +1 hop Next, không cần nếu cùng domain | Documented — không mang nguyên pattern dev lên prod |
-| **api chỉ Bearer** | `@fastify/jwt` default | Prod có thể thêm `@fastify/cookie` đọc cookie trực tiếp — hoãn |
-| **`packages/config`** | Học viên từ chối over-engineer | Mỗi workspace giữ `tsconfig.json` riêng |
-| **Hardcode `BOARD_ID` trên FE** | ~~Chưa Board list~~ → đã có `GET /boards` + select | Đã trả phần lớn 2026-08-04; còn Board CRUD UI sau nếu cần |
-| **Silent refresh access token** | Cookie refresh + BFF + request retry | ✅ PASS 2026-08-04 |
-| **JWT `type` access vs refresh** | Cùng SECRET; `/refresh` chỉ verify chữ ký | Thêm claim `type` khi sign + check khi refresh |
-| **Axios thay fetch** | Tham khảo | **Chưa làm**; giữ `fetch` + `request()` |
+| **BFF Route Handlers** | ~~data + auth proxy~~ | ✅ **XÓA HẾT** — RSC + Server Actions |
+| **BFF data tasks/boards** | ~~proxy~~ | ✅ **XÓA** — RSC `apiFetch` + Server Actions |
+| **React Query trên tasks** | ~~lạm dụng~~ | ✅ **GỠ** — opt-in lại khi board/drag/offline |
+| **Silent refresh client `http.ts`** | ~~browser interceptor~~ | ✅ **XÓA** — server `apiFetch` refresh trực tiếp |
 
-**Quyết định học viên:** Pattern **(A)** — học xong BFF tasks proxy GĐ1, ghi nợ refactor prod.
+**Quyết định học viên (cập nhật 2026-08-05):** RSC + Server Actions; không Route Handlers/BFF.
 
-### Auth dev — mental model (3 hop login)
+### Auth / data mental model (sau RSC refactor)
 
 ```
-Browser ──POST /api/auth/login──► Next Route Handler (:3000)
-Next (server) ──POST /api/v1/auth/login──► Fastify (:3001)
-Next Set-Cookie httpOnly trên :3000 → proxy.ts cho /tasks
-Client data calls GĐ1: fetch("/api/...") same-origin; Route Handler gắn Bearer → Fastify
+Browser ──form action──► Next Server Action ──► Fastify (:3001) + Set-Cookie
+RSC / Server Action ──cookies() + Bearer──► Fastify (:3001) trực tiếp
 ```
 
-**Cookie domain:** cookie `:3000` **không** tự gửi sang `:3001` (khác origin) — không phải vì httpOnly.
-
-**Convention Next API routes:** `app/api/auth/login/route.ts` → `POST /api/auth/login` — **không** nhét `route.ts` cạnh `page.tsx` trong `(auth)/login/`.
-
+**Cookie domain:** cookie `:3000` **không** tự gửi sang `:3001` — server Next đọc cookie rồi gắn Bearer.
 ### GĐ0.4 Design System — quyết định styling (cập nhật 2026-07-26)
 
 Học viên chốt **C — Hybrid:** token = CSS vars trong Tailwind v4 `@theme`; component dùng utility class (`bg-primary`…). Gộp Lớp 1+3. **Skip CSS Modules (Lớp 2)** tạm thời.

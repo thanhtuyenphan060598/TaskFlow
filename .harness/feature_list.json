@@ -30,10 +30,10 @@
     {
       "id": "feat-0.2-jwt",
       "name": "GĐ2 Bài 4 JWT (access 15m + refresh 7d)",
-      "description": "@fastify/jwt, JWT_SECRET env validate, ký token ở route (CÁCH A), trả {accessToken, refreshToken}",
+      "description": "@fastify/jwt, JWT_SECRET env validate (đang 1 secret — LỖ); chốt nâng JWT_ACCESS_SECRET + JWT_REFRESH_SECRET + namespace refresh — học viên tự triển",
       "dependencies": ["feat-0.2-auth-basics"],
       "status": "done",
-      "evidence": "decode payload access exp-iat=900s(15m), refresh=604800s(7d) PASS"
+      "evidence": "TTL decode PASS; dual-secret: chốt thiết kế + mentor revert; học viên triển 2026-08-05"
     },
     {
       "id": "feat-0.2-auth-hook",
@@ -70,10 +70,10 @@
     {
       "id": "feat-0.1c",
       "name": "GĐ0.1 Refresh token endpoint /auth/refresh",
-      "description": "V1 shared refreshTokenSchema (.strict); V2 POST /auth/refresh: app.jwt.verify(refreshToken) trong try/catch→fail 401→OK ký access mới 15m. Bản cơ bản (chưa rotation/revoke — nợ GĐ0.3)",
+      "description": "POST /auth/refresh: hiện app.jwt.verify (1 secret = lỗ). Target: verify JWT_REFRESH_SECRET via app.jwt.refresh. Rotation/revoke = scale sau.",
       "dependencies": ["feat-0.1a-ratelimit"],
       "status": "done",
-      "evidence": "TEST 6 case PASS: refresh thật→200+accessToken mới; token rác→401 'Invalid refresh token'; thiếu field→400 ValidationError; login/register→201/200. NỢ: case dùng access token cũng qua /refresh (cùng secret) — cần type:refresh/access, hoãn GĐ0.3. Bug đã fix: import '../lib/error.js'→'errors.js'"
+      "evidence": "6 case PASS với 1 secret; lỗ access-as-refresh còn tới khi học viên ship dual secret"
     },
     {
       "id": "feat-0.1d",
@@ -113,7 +113,7 @@
       "description": "FE Next.js board/task, React Query, RHF+Zod, Tailwind, drag-drop, realtime board (WebSocket presence), offline (Zustand+IndexedDB), search/filter/pagination",
       "dependencies": ["feat-0.4-design-system"],
       "status": "in-progress",
-      "evidence": "2026-08-04: CRUD+status/priority PASS; Board GET+BFF+select (bỏ hardcode); FE api/+useTasks; silent refresh BFF+request retry browser PASS (401→refresh→retry). Nợ: JWT type claim access vs refresh; redirect login khi refresh fail; GĐ9 BFF. NEXT: drag-drop/filter/realtime hoặc JWT type."
+      "evidence": "2026-08-05: dual JWT secret; tasks → RSC+Server Actions; login/register → Server Actions; xóa RQ và toàn bộ Route Handlers/BFF. Browser login→/tasks PASS; endpoint cũ 404; lint+tsc PASS. NEXT: product features với client tối thiểu."
     },
     {
       "id": "feat-app2-time",

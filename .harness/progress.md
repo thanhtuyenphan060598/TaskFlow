@@ -2,24 +2,25 @@
 
 ## Current State
 
-**Last Updated:** 2026-08-04 (toi)
+**Last Updated:** 2026-08-05 (zero Route Handlers)
 **Active Feature:** `feat-app1-task` **in-progress**
 **GĐ0.1 → GĐ0.4:** DONE
 
-## Session 2026-08-04 — CRUD + boards + refactor + silent refresh
+## Done
 
-- [x] status/priority, Board API+BFF+select, FE refactor (`api/` + `useTasks`)
-- [x] Silent refresh BFF + `request()` retry — browser PASS (401→refresh→task POST/GET)
-- [x] Harness: clean-from-start; giải thích access≠refresh type claim
-- [x] Commit/push `c598eb2`
+- [x] Dual JWT secret
+- [x] **Refactor `/tasks` Next canonical:** RSC fetch + Server Actions; gỡ RQ/RHF khỏi tasks; xóa data BFF (tasks/boards)
+- [x] Xóa toàn bộ Route Handlers; login/register → Server Actions; refresh → server helper
+- [x] Verify: Server Action login → `/tasks`; proxy refresh cookie-only → access mới; invalid → `/login`; lint + `tsc` PASS
+- [x] Commit + push (session này)
 
 ## What's Next
 
-1. Optional: redirect login khi refresh fail; JWT `type` claim
-2. feat-app1 tiếp (drag-drop / filter / realtime…)
+1. Filter / search / drag-drop / realtime (RQ chỉ khi bài toán cần)
+2. GĐ9 cùng domain
 
-## Notes / Nợ
+## Notes
 
-- JWT access/refresh cùng secret, chưa có `type` — access còn hạn vẫn verify được trên `/refresh`
-- Nợ GĐ9 BFF
-- Mentor chỉ code khi học viên nhờ rõ
+- Rule: không thêm `app/api/*` nếu RSC/Server Action giải quyết được
+- RQ = opt-in sau (board interactive / offline)
+- Env local: `JWT_ACCESS_SECRET` + `JWT_REFRESH_SECRET` (khác nhau, ≥32) — không commit `.env`
