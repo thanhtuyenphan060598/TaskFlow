@@ -77,7 +77,7 @@ Học viên chạy mentor qua `cline` TRONG TERMINAL của Cursor (KHÔNG phải
 (2) Nén context thì bảo học viên MỞ SESSION MỚI (đọc CONTEXT.md), đừng bấm Compact UI.
 (3) Không cần xóa cache/reinstall. Muốn dùng nút bấm/compact mượt thì học viên tự chuyển sang Chat panel IDE.
 
-## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật 2026-08-04 chiều)
+## ⏸️ ĐIỂM DỪNG HIỆN TẠI (đọc ĐẦU TIÊN — cập nhật 2026-08-06)
 
 **Source of truth trạng thái:** `.harness/feature_list.json` (`current_focus` = `feat-app1-task`, **in-progress**).
 
@@ -85,39 +85,33 @@ Học viên chạy mentor qua `cline` TRONG TERMINAL của Cursor (KHÔNG phải
 
 | Bước | Status |
 |------|--------|
-| Task CRUD UI + status/priority edit | ✅ browser PASS |
-| Board API `GET /boards` + BFF + FE select (bỏ hardcode) | ✅ PASS |
-| FE refactor: `api/` + `hooks/useTasks` (query+mutation gộp) + `request()` | ✅ code |
-| Silent refresh access token khi hết hạn | ✅ browser PASS: 401→refresh→retry (POST+GET tasks) |
-| Commit/push buổi này | ✅ (session này) |
+| Dual JWT + RSC/Server Actions + zero Route Handlers | ✅ PASS (commit `ac7ca34`) |
+| Học: proxy vs `apiFetch` refresh; RSC đọc cookie OK, **set cookie** hạn chế khi render | ✅ lý thuyết |
+| Học viên chọn bài **A — Filter / search** (URL `searchParams` → Fastify) | ✅ chốt |
+| Phase 1 BE: Zod parse `request.query` + Prisma `where` | ⏸️ **chưa code** — session dừng đây |
+| Commit/push harness buổi này | ✅ |
 
-### Quy ước học viên chốt 2026-08-04 — **viết clean từ đầu**
+### Bài A — Filter / search (next session)
 
+**Zod không query DB.** Zod chỉ validate/parse query string → object typed; Prisma mới `findMany`.
 
-> **Không** đợi “làm xong feature rồi mới refactor”. Gom fetch/hook/UI ngay khi feature còn nhỏ. Refactor muộn = cực, dễ vỡ, tốn buổi học chỉ để dọn nhà.
+```
+/tasks?status=TODO&q=fix
+  → RSC searchParams
+  → GET Fastify /tasks?...
+  → Zod parse request.query (sai enum → 400)
+  → service/repo Prisma where
+```
 
-Áp dụng FE web:
-- HTTP → `src/api/<domain>/` + helper `request()` trong `api/http.ts`
-- React Query → hook theo domain (`useTasks` gồm query + mutations; `useBoards` query)
-- Page ≈ UI + form state thôi
-- **Tham khảo (chưa triển khai):** có thể đổi `fetch` → **axios** sau — xem mục “fetch vs axios” bên dưới. Hiện giữ `fetch` + `request()`.
+**Phase 1 (BE, chưa làm):** `listTasksQuerySchema` trong shared → route GET parse → service/repo filter.
 
-### fetch vs axios (tham khảo — KHÔNG đổi stack buổi này)
+**Mentor rule (học viên chốt):** chỉ hướng dẫn; code khi học viên nói **「làm giúp」**.
 
-| | `fetch` (hiện tại) | axios |
-|--|-------------------|--------|
-| Có sẵn browser | ✅ không thêm dep | ❌ thêm package |
-| JSON | tự `.json()`, tự set header trong `request()` | mặc định parse JSON tiện hơn |
-| `!res.ok` | phải check tay (như đang làm) | reject trên status 4xx/5xx (interceptor) |
-| Interceptor 401→refresh | viết tay quanh `request()` | `axios.interceptors` quen thuộc |
-| Upload/progress, cancel | đủ với fetch hiện đại | API cũ quen hơn một số team |
+### Bước tiếp
 
-**Kết luận tạm:** giữ `fetch` + `request()` đủ học BFF/RQ. Axios **được phép** sau nếu muốn interceptor refresh mượt — không bắt buộc, không đổi hôm nay.
-
-### Bước tiếp (2026-08-05 — sau RSC refactor)
-
-1. Filter / search / drag-drop / realtime (đưa RQ lại **chỉ khi** cần)
-2. GĐ9 cùng domain
+1. Phase 1 BE filter (Zod query + Prisma) → rồi FE `searchParams` trên RSC
+2. Sau đó: drag-drop / realtime (RQ chỉ khi cần)
+3. GĐ9 cùng domain
 
 ### Architecture pivot — tasks Next canonical ✅ (2026-08-05)
 

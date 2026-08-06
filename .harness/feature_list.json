@@ -113,7 +113,7 @@
       "description": "FE Next.js board/task, React Query, RHF+Zod, Tailwind, drag-drop, realtime board (WebSocket presence), offline (Zustand+IndexedDB), search/filter/pagination",
       "dependencies": ["feat-0.4-design-system"],
       "status": "in-progress",
-      "evidence": "2026-08-05: dual JWT secret; tasks → RSC+Server Actions; login/register → Server Actions; xóa RQ và toàn bộ Route Handlers/BFF. Browser login→/tasks PASS; endpoint cũ 404; lint+tsc PASS. NEXT: product features với client tối thiểu."
+      "evidence": "2026-08-05: dual JWT + RSC/Server Actions + zero BFF (ac7ca34). 2026-08-06: chốt bài A filter/search (URL searchParams); Phase 1 BE Zod parse query + Prisma where CHƯA code — pause. NEXT: listTasksQuerySchema → GET /tasks filter → rồi FE."
     },
     {
       "id": "feat-app2-time",

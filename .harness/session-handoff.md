@@ -1,4 +1,4 @@
-# Session Handoff — 2026-08-05 (zero Route Handlers)
+# Session Handoff — 2026-08-06
 
 ## Mở session
 
@@ -8,25 +8,29 @@ pnpm --filter @taskflow/api dev
 pnpm --filter @taskflow/web dev
 ```
 
-## Architecture (đã ship)
+## Đã ship (không đổi code buổi này)
 
-- Dual JWT: `JWT_ACCESS_SECRET` + `JWT_REFRESH_SECRET` (`namespace` access/refresh)
-- Tasks: RSC + Server Actions; client islands = create form + task row
-- Auth: `app/(auth)/actions.ts` (login/register); **không** còn `app/api/**`
+- Dual JWT; tasks RSC + Server Actions; auth Server Actions; không `app/api/**`
 - Refresh: `proxy.ts` + `lib/api/server.ts` `apiFetch`
-- Đã gỡ React Query / RHF / data+auth BFF Route Handlers
+- HEAD: `ac7ca34`
 
-## Verify đã PASS
+## Điểm dừng 2026-08-06
 
-- Browser login → `/tasks`
-- Refresh cookie only → proxy set access mới
-- Invalid refresh → `/login`
-- lint + tsc PASS
+- Học viên chọn **A — Filter / search**
+- **Chưa implement** Phase 1 BE (Zod query + Prisma filter)
+- Checkpoint mở: `status=FOOBAR` → Zod bắt, HTTP 400 (không để Prisma)
+
+## Next (1 feature)
+
+1. Shared: `listTasksQuerySchema` (`status?`, `q?`)
+2. `GET /tasks` parse `request.query` → service/repo `findMany` where
+3. Verify curl: filter OK + status rác → 400
+4. Rồi mới FE `searchParams`
 
 ## Seed
 
 `owner@taskflow.dev` / `password123`
 
-## Next
+## Mentor
 
-Filter / drag-drop / realtime (RQ chỉ khi cần); GĐ9 cùng domain
+Chỉ hướng dẫn; code khi học viên nói **「làm giúp」**.
